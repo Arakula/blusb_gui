@@ -1,2 +1,2 @@
 # blusb_gui
-GUI Configuration Program for the Blusb Universal Model MO Controller
+GUI Configuration Program for the Blusb Universal Model M Controller
