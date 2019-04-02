@@ -64,4 +64,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define min(a,b)            (((a) < (b)) ? (a) : (b))
 #endif
 
+#ifndef _countof
+#define _countof(array) (sizeof(array) / sizeof(array[0]))
+#endif
+
 #endif // !defined(_WXSTD_H__INCLUDED_)

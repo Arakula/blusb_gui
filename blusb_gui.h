@@ -20,7 +20,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #ifndef _blusb_gui_h__included_
 #define _blusb_gui_h__included_
 
-#include "BlusbDev.h"
+#include "BlUsbDev.h"
 #include "MainFrm.h"
 #include "KbdGuiLayout.h"
 
