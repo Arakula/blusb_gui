@@ -102,7 +102,7 @@ curDefaultLayout = 0;
 /*****************************************************************************/
 
 wxBEGIN_EVENT_TABLE(CBlusbGuiApp, wxApp)
-  EVT_ACTIVATE_APP(OnActivateApp)
+  EVT_ACTIVATE_APP(CBlusbGuiApp::OnActivateApp)
 wxEND_EVENT_TABLE()
 
 /*****************************************************************************/

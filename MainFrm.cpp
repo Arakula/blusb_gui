@@ -332,7 +332,7 @@ wxBEGIN_EVENT_TABLE(CMainFrame, wxFrame)
 
     EVT_CLOSE(CMainFrame::OnClose)
 
-    EVT_TIMER(Blusb_Timer1, OnReadMatrixTimer)
+    EVT_TIMER(Blusb_Timer1, CMainFrame::OnReadMatrixTimer)
     EVT_CHOICE(Blusb_LayerCount, CMainFrame::OnLayerCount)
     EVT_CHOICE(Blusb_Debounce, CMainFrame::OnDebounce)
 
