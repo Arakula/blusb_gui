@@ -156,7 +156,7 @@ wxBEGIN_EVENT_TABLE(CKbdWnd, wxScrolledWindow)
     EVT_KEY_UP(CKbdWnd::OnKeyUp)
 #endif
     EVT_LEFT_DOWN(CKbdWnd::OnLButtonDown)
-    EVT_TIMER(Kbd_Timer1, OnReadLEDTimer)
+    EVT_TIMER(Kbd_Timer1, CKbdWnd::OnReadLEDTimer)
 wxEND_EVENT_TABLE()
 
 /*****************************************************************************/
