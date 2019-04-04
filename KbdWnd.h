@@ -152,6 +152,7 @@ protected:
     KbdIndex2Key matrix2Key;
     wxColour clrBkgnd, clrBorder;
     wxColour clrKey[ksStates][2];
+    wxFont keyFont;
     wxTimer t;
     bool bLEDState[3], getLEDStates;
     bool bAllKeys;
