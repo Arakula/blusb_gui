@@ -22,7 +22,9 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "KbdGuiLayout.h"
 
-#define KEYCLR_BORDER        0, 0, 0
+#define KEYCLR_BOARD         216, 216, 220
+#define KEYCLR_TEXT           76,  82,  84
+#define KEYCLR_BORDER         76,  82,  84
 #define KEYCLR_UNPRESSED     230, 230, 230
 #define KEYCLR_UNPRESSED_HI  230, 230, 230
 #define KEYCLR_PRESSED       160, 160, 230
@@ -38,7 +40,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 /* CKbdWnd class declaration                                                 */
 /*****************************************************************************/
 
-class CKbdWnd : public wxScrolledWindow
+class CKbdWnd : public wxPanel
 {
 public:
     enum KeyState

@@ -172,13 +172,14 @@ CKbdWnd::CKbdWnd
     long style,
     const wxString& name
     )
-: wxScrolledWindow(), // default constructor, because of SetBackgroundStyle()
+: wxPanel(), // default constructor, because of SetBackgroundStyle()
   keyFont(wxFontInfo(wxSize(0, 11)).Family(wxFONTFAMILY_SWISS))
 {
 SetBackgroundStyle(wxBG_STYLE_PAINT);
 Create(parent, id, pos, CalcLayout(size), style, name);
 
-clrBkgnd = wxSystemSettings::GetColour(wxSYS_COLOUR_FRAMEBK);
+// clrBkgnd = wxSystemSettings::GetColour(wxSYS_COLOUR_FRAMEBK);
+clrBkgnd = wxColour(KEYCLR_BOARD);
 clrBorder = wxSystemSettings::GetColour(wxSYS_COLOUR_BTNSHADOW);
 memcpy(clrKey, clrDefault, sizeof(clrKey));
 
@@ -407,7 +408,7 @@ dc.SetBrush(brBack);
 dc.SetPen(penBack);
 dc.SetFont(keyFont);
 // Find Out where the window is scrolled to
-wxPoint vb = GetViewStart();     // Top left corner of client
+// wxPoint vb = GetViewStart();     // Top left corner of client
 wxRegionIterator upd(GetUpdateRegion()); // get the update rect list
 while (upd)
   {
@@ -471,6 +472,7 @@ if (bIsLed)
   }
 
 rc.Deflate(1, 1);
+dc.SetTextForeground(wxColour(KEYCLR_TEXT));
 dc.DrawLabel(def.label[0],
              wxNullBitmap,
              rc,
