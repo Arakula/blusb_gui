@@ -172,7 +172,8 @@ CKbdWnd::CKbdWnd
     long style,
     const wxString& name
     )
-: wxScrolledWindow()  // default constructor, because of SetBackgroundStyle()
+: wxScrolledWindow(), // default constructor, because of SetBackgroundStyle()
+  keyFont(wxFontInfo(wxSize(0, 11)).Family(wxFONTFAMILY_SWISS))
 {
 SetBackgroundStyle(wxBG_STYLE_PAINT);
 Create(parent, id, pos, CalcLayout(size), style, name);
@@ -404,6 +405,7 @@ KeyClrs kclr[ksStates][2] =
 
 dc.SetBrush(brBack);
 dc.SetPen(penBack);
+dc.SetFont(keyFont);
 // Find Out where the window is scrolled to
 wxPoint vb = GetViewStart();     // Top left corner of client
 wxRegionIterator upd(GetUpdateRegion()); // get the update rect list
