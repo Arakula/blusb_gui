@@ -28,18 +28,20 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 //#include "res/Application.xpm"
 #endif
 
+/*****************************************************************************/
+/* Default colors for key / LED drawing                                      */
+/*****************************************************************************/
+
+#define KEYCLR_UNPRESSED     230, 230, 230  // initial unpressed
+#define KEYCLR_PRESSED       160, 160, 230  // pressed
+#define KEYCLR_RELEASED      160, 230, 160  // released after press
+#define KEYCLR_ALERT         230, 160, 160  // error on that key
+#define KEYCLR_LEDON           0, 225,   0  // LED lit
+#define KEYCLR_LEDON_HI        0, 160,   0  // LED lit highlight
+
 /*===========================================================================*/
 /* CKbdWnd class members                                                     */
 /*===========================================================================*/
-
-static wxColour clrDefault[CKbdWnd::ksStates][2] =
-  {
-    { wxColour(KEYCLR_UNPRESSED), wxColour(KEYCLR_UNPRESSED_HI) },
-    { wxColour(KEYCLR_PRESSED),   wxColour(KEYCLR_PRESSED_HI) },
-    { wxColour(KEYCLR_RELEASED),  wxColour(KEYCLR_RELEASED_HI) },
-    { wxColour(KEYCLR_ALERT),     wxColour(KEYCLR_ALERT_HI) },
-    { wxColour(KEYCLR_LEDON),     wxColour(KEYCLR_LEDON_HI) },
-  };
 
 /*****************************************************************************/
 /* HookLLKeyboard : (de)installs a low-level keyboard hook                   */
@@ -160,6 +162,31 @@ wxBEGIN_EVENT_TABLE(CKbdWnd, wxScrolledWindow)
 wxEND_EVENT_TABLE()
 
 /*****************************************************************************/
+/* DiffColour : creates a differential colour                                */
+/*****************************************************************************/
+
+static wxColour DiffColour
+    (
+    wxColour &unpressed,
+    wxColour &defUnpressed,
+    wxColour &defDiff
+    )
+{
+wxColour out;
+int r = unpressed.Red(),   rd = defUnpressed.Red()   - defDiff.Red();
+int g = unpressed.Green(), gd = defUnpressed.Green() - defDiff.Green();
+int b = unpressed.Blue(),  bd = defUnpressed.Blue()  - defDiff.Blue();
+
+if (r >= 128) r -= rd; else r += rd;
+if (g >= 128) g -= gd; else g += gd;
+if (b >= 128) b -= bd; else b += bd;
+
+return wxColour(max(min(r, 255), 0),
+                max(min(g, 255), 0),
+                max(min(b, 255), 0));
+}
+
+/*****************************************************************************/
 /* CKbdWnd : constructor                                                     */
 /*****************************************************************************/
 
@@ -172,15 +199,36 @@ CKbdWnd::CKbdWnd
     long style,
     const wxString& name
     )
-: wxScrolledWindow(), // default constructor, because of SetBackgroundStyle()
+: wxPanel(), // default constructor, because of SetBackgroundStyle()
   keyFont(wxFontInfo(wxSize(0, 11)).Family(wxFONTFAMILY_SWISS))
 {
 SetBackgroundStyle(wxBG_STYLE_PAINT);
-Create(parent, id, pos, CalcLayout(size), style, name);
+wxSize szInitial = CalcLayout(size);
+Create(parent, id, pos, szInitial, style, name);
+SetMinSize(szInitial);
 
 clrBkgnd = wxSystemSettings::GetColour(wxSYS_COLOUR_FRAMEBK);
 clrBorder = wxSystemSettings::GetColour(wxSYS_COLOUR_BTNSHADOW);
-memcpy(clrKey, clrDefault, sizeof(clrKey));
+// since at least macOS has dark themes, this needs to be done a bit
+// more complicated than just setting a colour <sigh> ...
+clrKey[ksUnpressed][0] = clrKey[ksUnpressed][1] =
+    wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE);
+// the other colours are derived from EK switch hitter
+clrKey[ksPressed][0] = clrKey[ksPressed][1] =
+    DiffColour(clrKey[ksUnpressed][0],
+               wxColour(KEYCLR_UNPRESSED),
+               wxColour(KEYCLR_PRESSED));
+clrKey[ksReleased][0] = clrKey[ksReleased][1] =
+    DiffColour(clrKey[ksUnpressed][0],
+               wxColour(KEYCLR_UNPRESSED),
+               wxColour(KEYCLR_RELEASED));
+clrKey[ksAlert][0] = clrKey[ksAlert][1] =
+    DiffColour(clrKey[ksUnpressed][0],
+               wxColour(KEYCLR_UNPRESSED),
+               wxColour(KEYCLR_ALERT));
+// These are FIXED for now:
+clrKey[ksLEDOn][0] = wxColour(KEYCLR_LEDON);
+clrKey[ksLEDOn][1] = wxColour(KEYCLR_LEDON_HI);
 
 bAllKeys = false;
 getLEDStates = true;
@@ -282,8 +330,8 @@ if (sz.x < 0 || sz.y < 0)
 // fixed size
 int nMult = 36;  // neatly divisible by 2, 3 and 4
 
-sz.x = 6 + (int)ceil(nMult * layout.GetHorizontalUnits());
-sz.y = 6 + (int)ceil(nMult * layout.GetVerticalUnits());
+sz.x = 8 + (int)ceil(nMult * layout.GetHorizontalUnits());
+sz.y = 8 + (int)ceil(nMult * layout.GetVerticalUnits());
 #else
 // variable layout based on externally dictated size
 int nMult = (int)ceil(sz.x / layout.GetHorizontalUnits());
@@ -407,7 +455,7 @@ dc.SetBrush(brBack);
 dc.SetPen(penBack);
 dc.SetFont(keyFont);
 // Find Out where the window is scrolled to
-wxPoint vb = GetViewStart();     // Top left corner of client
+//wxPoint vb = GetViewStart();     // Top left corner of client
 wxRegionIterator upd(GetUpdateRegion()); // get the update rect list
 while (upd)
   {
@@ -599,7 +647,7 @@ switch (nMsg)
     }
     break;
   }
-return wxScrolledWindow::MSWWindowProc(nMsg, wParam, lParam);
+return wxPanel::MSWWindowProc(nMsg, wParam, lParam);
 }
 #endif // __WXMSW__
 
