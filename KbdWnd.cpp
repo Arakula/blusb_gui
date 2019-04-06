@@ -167,9 +167,9 @@ wxEND_EVENT_TABLE()
 
 static wxColour DiffColour
     (
-    wxColour &unpressed,
-    wxColour &defUnpressed,
-    wxColour &defDiff
+    wxColour unpressed,
+    wxColour defUnpressed,
+    wxColour defDiff
     )
 {
 wxColour out;
