@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\wxWidgets-3.1.0\lib\vc_lib\mswd;..\..\wxWidgets-3.1.0\include\msvc;..\..\wxWidgets-3.1.0\include;..\..\libusb\libusb;"
+				AdditionalIncludeDirectories="..\..\wxWidgets-3.1.2\lib\vc_lib\mswd;..\..\wxWidgets-3.1.2\include\msvc;..\..\wxWidgets-3.1.2\include;..\..\libusb\libusb;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;__WXMSW__;SCALEBMP=1"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -56,16 +56,16 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				AdditionalIncludeDirectories=";..\..\wxWidgets-3.1.0\include\msvc;..\..\wxWidgets-3.1.0\include"
+				AdditionalIncludeDirectories=";..\..\wxWidgets-3.1.2\include\msvc;..\..\wxWidgets-3.1.2\include"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="wxmsw31ud.lib libusb-1.0.lib  setupapi.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib winmm.lib shell32.lib shlwapi.lib comctl32.lib ole32.lib oleaut32.lib uuid.lib rpcrt4.lib advapi32.lib version.lib wsock32.lib wininet.lib"
+				AdditionalDependencies="wxbase31ud.lib wxmsw31ud_core.lib libusb-1.0.lib  setupapi.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib winmm.lib shell32.lib shlwapi.lib comctl32.lib ole32.lib oleaut32.lib uuid.lib rpcrt4.lib advapi32.lib version.lib wsock32.lib wininet.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\wxWidgets-3.1.0\lib\vc_lib;..\..\libusb\Win32\Debug\lib"
+				AdditionalLibraryDirectories="..\..\wxWidgets-3.1.2\lib\vc_lib;..\..\libusb\Win32\Debug\lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -119,7 +119,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="..\..\wxWidgets-3.1.0\lib\vc_lib\mswd;..\..\wxWidgets-3.1.0\include\msvc;..\..\wxWidgets-3.1.0\include;..\..\libusb\libusb"
+				AdditionalIncludeDirectories="..\..\wxWidgets-3.1.2\lib\vc_lib\mswd;..\..\wxWidgets-3.1.2\include\msvc;..\..\wxWidgets-3.1.2\include;..\..\libusb\libusb"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;__WXMSW__;SCALEBMP=1"
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="2"
@@ -134,16 +134,16 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				AdditionalIncludeDirectories=";..\..\wxWidgets-3.1.0\include\msvc;..\..\wxWidgets-3.1.0\include"
+				AdditionalIncludeDirectories=";..\..\wxWidgets-3.1.2\include\msvc;..\..\wxWidgets-3.1.2\include"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="wxmsw31u.lib libusb-1.0.lib  setupapi.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib winmm.lib shell32.lib shlwapi.lib comctl32.lib ole32.lib oleaut32.lib uuid.lib rpcrt4.lib advapi32.lib version.lib wsock32.lib wininet.lib"
+				AdditionalDependencies="wxbase31u.lib wxmsw31u_core.lib libusb-1.0.lib  setupapi.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib winmm.lib shell32.lib shlwapi.lib comctl32.lib ole32.lib oleaut32.lib uuid.lib rpcrt4.lib advapi32.lib version.lib wsock32.lib wininet.lib"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\wxWidgets-3.1.0\lib\vc_lib;..\..\libusb\Win32\Release\lib"
+				AdditionalLibraryDirectories="..\..\wxWidgets-3.1.2\lib\vc_lib;..\..\libusb\Win32\Release\lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
