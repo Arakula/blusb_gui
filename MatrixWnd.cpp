@@ -676,7 +676,7 @@ if (numRows > oldRows)
                      wxString::Format(bColsRowsSwitched ? "C%d" : "R%d", i));
   }
 
-// Needs to be done in two loops as row AND column count have changed
+// Needs to be done in two loops as row AND column count may have changed
 int minCols = min(oldCols, numCols);
 for (i = oldRows; i < numRows; i++)
   for (j = 0; j < minCols; j++)
