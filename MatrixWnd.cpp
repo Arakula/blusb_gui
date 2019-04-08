@@ -676,8 +676,10 @@ if (numRows > oldRows)
                      wxString::Format(bColsRowsSwitched ? "C%d" : "R%d", i));
   }
 
+// Needs to be done in two loops as row AND column count have changed
+int minCols = min(oldCols, numCols);
 for (i = oldRows; i < numRows; i++)
-  for (j = oldCols; j < numCols; j++)
+  for (j = 0; j < minCols; j++)
     {
     SetCellValue(i, j, sNone);
 #if ONE_CHOICE_EDITOR
@@ -688,6 +690,19 @@ for (i = oldRows; i < numRows; i++)
                   new CMatrixChoiceEditor(hidTexts.size(), &hidTexts[0]));
 #endif
     }
+if (numCols > oldCols)
+  for (i = 0; i < numRows; i++)
+    for (j = oldCols; j < numCols; j++)
+      {
+      SetCellValue(i, j, sNone);
+#if ONE_CHOICE_EDITOR
+      SetCellEditor(i, j, choices);
+      choices->IncRef();  // necessary, as SetCellEditor() doesn't do it.
+#else
+      SetCellEditor(i, j,
+                    new CMatrixChoiceEditor(hidTexts.size(), &hidTexts[0]));
+#endif
+      }
 }
 
 /*****************************************************************************/
