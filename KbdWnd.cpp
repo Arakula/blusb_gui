@@ -149,7 +149,7 @@ bGUIKeyInhibited = bOn;
 /* CKbdWnd Event Table                                                       */
 /*****************************************************************************/
 
-wxBEGIN_EVENT_TABLE(CKbdWnd, wxScrolledWindow)
+wxBEGIN_EVENT_TABLE(CKbdWnd, wxPanel)
     EVT_PAINT(CKbdWnd::OnPaint)
 #ifndef __WXMSW__
     // handled through MSWWindowProc() in Windows

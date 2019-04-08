@@ -2095,14 +2095,6 @@ return f.Write(wxTextFileType_Unix);
 /* CalcLayout : calculates the x positions based on the key definitions      */
 /*****************************************************************************/
 
-void KbdGui::CalcLayout()
-{
-size_t i;
-
-float fNextUpper = -1.f;
-int prevStart = -1, nextStart = -1;
-int curRow = -1, outRow = -1;
-float rowx, rowy = -1.f, nextRowy = 1.f;
 struct keyoverlap
   {
   float startx1;
@@ -2113,6 +2105,15 @@ struct keyoverlap
     width = e;
     }
   };
+
+void KbdGui::CalcLayout()
+{
+size_t i;
+
+float fNextUpper = -1.f;
+int prevStart = -1, nextStart = -1;
+int curRow = -1, outRow = -1;
+float rowx, rowy = -1.f, nextRowy = 1.f;
 wxVector<keyoverlap> prevOver, nextOver;
 int prevOverIdx;
 nMaxRow = nMaxCol = 0;
