@@ -53,30 +53,29 @@ static MatrixKey defIBMmatrix[] =
 // 7/7 - left part of Right Shift   (/? on Brazilian - presumably KB_INTL3)
 
 // Default 122-key IBM Model M Keyboard Matrix Layout
-// NB: this is purely theoretical at the moment, based on Ph0sph0rgl0w's matrix drawing
-// \ is at 5/4 (ANSI) and 6/5 (ISO)
+// \ is at 5/13 (ANSI) and 6/12 (ISO)
 static MatrixKey def122matrix[] =
   {
-  // 0       1         2         3         4          5          6        7          8       9       10/A     11/B   12/C   13/D      14/E      15/F      16/G        17/H      18/I      19/J
-  KB_HOME,   KB_NONE,  KB_NONE,  KB_UP,    KB_DOWN,   KB_QUOTE,  KB_NONE, KB_NONE,   KB_F2,  KB_F1,  KB_F13,  KB_H,  KB_G,  KB_NONE,  KB_NONE,  KB_NONE,  KB_RALT,    KB_LGUI,  KB_APP,   KB_LCTRL,
-  KB_RIGHT,  KP_6,     KP_5,     KB_DEL,   KP_4,      KB_SMCLN,  KB_L,    KB_K,      KB_F3,  KB_F15, KB_F14,  KB_J,  KB_F,  KB_D,     KB_S,     KB_A,     KB_NONE,    KB_NONE,  KB_NONE,  KP_PLUS,
-  KB_NONE,   KP_SLASH, KB_NUMLK, KB_PGUP,  KB_END,    KB_0,      KB_9,    KB_8,      KB_F5,  KB_F4,  KB_F16,  KB_7,  KB_4,  KB_3,     KB_2,     KB_1,     KB_NONE,    KB_NONE,  KB_PSCRN, KP_ASTRX,
-  KB_NONE,   KB_NONE,  KB_HOME,  KB_INS,   KB_BKSPC,  KB_MINUS,  KB_NONE, KB_EQUAL,  KB_F6,  KB_F18, KB_F17,  KB_6,  KB_5,  KB_NONE,  KB_NONE,  KB_TILDE, KB_NONE,    KB_SCRLK, KB_ESC,   KB_NONE,
-  KB_NONE,   KP_9,     KP_8,     KB_PGDN,  KP_7,      KB_P,      KB_O,    KB_I,      KB_F8,  KB_F7,  KB_F19,  KB_U,  KB_R,  KB_E,     KB_W,     KB_Q,     KB_NONE,    KB_TAB,   KB_PAUSE, KP_MINUS,
-  KB_NONE,   KB_NONE,  KB_NONE,  KB_END,   KB_BSLSH,  KB_LBRCE,  KB_NONE, KB_RBRCE,  KB_F9,  KB_F21, KB_F20,  KB_Y,  KB_T,  KB_NONE,  KB_NONE,  KB_NONE,  KB_NONE,    KB_NONE,  KB_NONE,  KB_NONE,
-  KB_NONE,   KP_3,     KP_2,     KB_NONE,  KB_ENTER,  KB_BSLSH,  KB_DOT,  KB_COMMA,  KB_F11, KB_F10, KB_F22,  KB_M,  KB_V,  KB_C,     KB_X,     KB_Z,     KB_RSHFT,   KB_CAPLK, KP_1,     KB_LEFT,
-  KP_ENTER,  KP_DOT,   KP_0,     KB_NONE,  KB_NONE,   KB_SLASH,  KB_NONE, KB_NONE,   KB_F12, KB_F24, KB_F23,  KB_N,  KB_B,  KB_NONE,  KB_NONE,  KB_PIPE,  KB_LSHFT,   KB_RCTRL, KB_SPACE, KB_LALT,
-  };
+//0         1         2         3        4        5     6     7       8       9       10        11       12        13        14        15        16        17       18        19        
+  KB_LGUI,  KB_RALT,  KB_NONE,  KB_NONE, KB_NONE, KB_G, KB_H, KB_F13, KB_F1,  KB_F2,  KB_NONE,  KB_NONE, KB_QUOTE, KB_DOWN,  KB_NONE,  KB_HOME,  KB_NONE,  KB_UP,   KB_LCTRL, KB_APP,   
+  KB_NONE,  KB_NONE,  KB_A,     KB_S,    KB_D,    KB_F, KB_J, KB_F14, KB_F15, KB_F3,  KB_K,     KB_L,    KB_SMCLN, KP_4,     KP_6,     KB_RIGHT, KP_5,     KB_DEL,  KP_PLUS,  KB_NONE,  
+  KB_NONE,  KB_NONE,  KB_1,     KB_2,    KB_3,    KB_4, KB_7, KB_F16, KB_F4,  KB_F5,  KB_8,     KB_9,    KB_0,     KB_END,   KP_SLASH, KB_NONE,  KB_NUMLK, KB_PGUP, KP_ASTRX, KB_PSCRN, 
+  KB_SCRLK, KB_NONE,  KB_TILDE, KB_NONE, KB_NONE, KB_5, KB_6, KB_F17, KB_F18, KB_F6,  KB_EQUAL, KB_NONE, KB_MINUS, KB_BKSPC, KB_NONE,  KB_NONE,  KB_HOME,  KB_INS,  KB_NONE,  KB_ESC,   
+  KB_TAB,   KB_NONE,  KB_Q,     KB_W,    KB_E,    KB_R, KB_U, KB_F19, KB_F7,  KB_F8,  KB_I,     KB_O,    KB_P,     KP_7,     KP_9,     KB_NONE,  KP_8,     KB_PGDN, KP_MINUS, KB_PAUSE, 
+  KB_NONE,  KB_NONE,  KB_NONE,  KB_NONE, KB_NONE, KB_T, KB_Y, KB_F20, KB_F21, KB_F9,  KB_RBRCE, KB_NONE, KB_LBRCE, KB_BSLSH, KB_NONE,  KB_NONE,  KB_NONE,  KB_END,  KB_NONE,  KB_NONE,  
+  KB_CAPLK, KB_RSHFT, KB_Z,     KB_X,    KB_C,    KB_V, KB_M, KB_F22, KB_F10, KB_F11, KB_COMMA, KB_DOT,  KB_BSLSH, KB_ENTER, KP_3,     KB_NONE,  KP_2,     KB_NONE, KB_LEFT,  KP_1,     
+  KB_RCTRL, KB_LSHFT, KB_PIPE,  KB_NONE, KB_NONE, KB_B, KB_N, KB_F23, KB_F24, KB_F12, KB_NONE,  KB_NONE, KB_SLASH, KB_NONE,  KP_DOT,   KP_ENTER, KP_0,     KB_NONE, KB_LALT,  KB_SPACE, 
+  };                                                                                                                                                                                      
 // Not yet determined:
-// 5/18 - EX5
-// 5/17 - EX6
-// 1/18 - EX7
-// 1/17 - EX8
+// 5/19 - EX5
+// 5/0  - EX6
+// 1/19 - EX7
+// 1/0  - EX8
 // Unused matrix connections on ANSI / European ISO:
-// 3/16 - left part of Backspace     (presumably KB_INTL4)
-// 6/0  - lower part of NumPad Enter
-// 7/4  - left part of NumPad 0
-// 7/6  - left part of Right Shift   (/? on Brazilian - presumably KB_INTL3)
+// 3/1  - left part of Backspace     (presumably KB_INTL4)
+// 6/15 - lower part of NumPad Enter
+// 7/13 - left part of NumPad 0
+// 7/11 - left part of Right Shift   (/? on Brazilian - presumably KB_INTL3)
 
 
 /*===========================================================================*/
