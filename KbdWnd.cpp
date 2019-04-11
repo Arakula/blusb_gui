@@ -38,6 +38,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define KEYCLR_ALERT         230, 160, 160  // error on that key
 #define KEYCLR_LEDON           0, 225,   0  // LED lit
 #define KEYCLR_LEDON_HI        0, 160,   0  // LED lit highlight
+#define KEYCLR_BORDER        192, 192, 192  // if no button shadow clr def'd
 
 /*===========================================================================*/
 /* CKbdWnd class members                                                     */
@@ -213,6 +214,13 @@ clrBorder = wxSystemSettings::GetColour(wxSYS_COLOUR_BTNSHADOW);
 // more complicated than just setting a colour <sigh> ...
 clrKey[ksUnpressed][0] = clrKey[ksUnpressed][1] =
     wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE);
+// wxGTK3 can deliver "transparent nothingness" for system colours (sigh)
+if (!clrKey[ksUnpressed][0].GetRGBA())
+  clrKey[ksUnpressed][0] = clrKey[ksUnpressed][1] = wxColour(KEYCLR_UNPRESSED);
+if (!clrBorder.GetRGBA())
+  clrBorder = DiffColour(clrKey[ksUnpressed][0],
+                         wxColour(KEYCLR_UNPRESSED),
+                         wxColour(KEYCLR_BORDER));
 // the other colours are derived from EK switch hitter
 clrKey[ksPressed][0] = clrKey[ksPressed][1] =
     DiffColour(clrKey[ksUnpressed][0],
@@ -652,14 +660,27 @@ return wxPanel::MSWWindowProc(nMsg, wParam, lParam);
 #endif // __WXMSW__
 
 /*****************************************************************************/
+/* PassOnKeyDown : called when a key is pressed on another window            */
+/*****************************************************************************/
+
+void CKbdWnd::PassOnKeyDown(wxKeyEvent &ev)
+{
+#if !defined(__WXMSW__)
+int kc = ev.GetKeyCode();               /* get key code from event           */
+int key = KbdGui::GetHID(kc);           /* retrieve HID for that key         */
+SetKeyState(key, ksPressed, true);
+#endif
+}
+
+/*****************************************************************************/
 /* OnKeyDown : called when a key is pressed on the window                    */
 /*****************************************************************************/
 
 void CKbdWnd::OnKeyDown(wxKeyEvent &ev)
 {
 //#if 1
-#ifdef _DEBUG
-// not for release builds until it really works!
+#if !defined(__WXMSW__) || defined(_DEBUG)
+// not for Windows release builds until it really works!
 
 int key = KB_UNUSED;
 
@@ -680,7 +701,11 @@ if (!bAllKeys)
 
 #else
 int kc = ev.GetKeyCode();               /* get key code from event           */
-int key = KbdGui::GetHID(kc);           /* retrieve HID for that key         */
+key = KbdGui::GetHID(kc);               /* retrieve HID for that key         */
+#endif
+
+#if !defined(__WXMSW__)
+// printf("CKbdWnd::OnKeyDown(%d)\n", key);
 #endif
 
 if (key != KB_UNUSED)
@@ -694,14 +719,27 @@ if (key != KB_UNUSED)
 }
 
 /*****************************************************************************/
+/* PassOnChar : called for character events on another window                */
+/*****************************************************************************/
+
+void CKbdWnd::PassOnChar(wxKeyEvent &ev)
+{
+#if !defined(__WXMSW__)
+int kc = ev.GetKeyCode();               /* get key code from event           */
+int key = KbdGui::GetHID(kc);           /* retrieve HID for that key         */
+// SetKeyState(key, ksPressed, false);
+#endif
+}
+
+/*****************************************************************************/
 /* OnChar : called for character events                                      */
 /*****************************************************************************/
 
 void CKbdWnd::OnChar(wxKeyEvent &ev)
 {
 //#if 1
-#ifdef _DEBUG
-// not for release builds until it really works!
+#if !defined(__WXMSW__) || defined(_DEBUG)
+// not for Windows release builds until it really works!
 
 int key = KB_UNUSED;
 
@@ -723,8 +761,13 @@ if (!bAllKeys)
 
 // not for release builds until it really works!
 int kc = ev.GetKeyCode();
-int key = KbdGui::GetHID(kc);           /* retrieve HID for that key         */
+key = KbdGui::GetHID(kc);               /* retrieve HID for that key         */
 #endif
+
+#if !defined(__WXMSW__)
+// printf("CKbdWnd::OnChar(%d)\n", key);
+#endif
+
 
 if (key != KB_UNUSED)
   {
@@ -737,14 +780,27 @@ if (key != KB_UNUSED)
 }
 
 /*****************************************************************************/
+/* PassOnKeyUp : called when a key is released on another window             */
+/*****************************************************************************/
+
+void CKbdWnd::PassOnKeyUp(wxKeyEvent &ev)
+{
+#if !defined(__WXMSW__)
+int kc = ev.GetKeyCode();               /* get key code from event           */
+int key = KbdGui::GetHID(kc);           /* retrieve HID for that key         */
+SetKeyState(key, ksReleased, false);
+#endif
+}
+
+/*****************************************************************************/
 /* OnKeyUp : called when a key is released on the window                     */
 /*****************************************************************************/
 
 void CKbdWnd::OnKeyUp(wxKeyEvent &ev)
 {
 //#if 1
-#ifdef _DEBUG
-// not for release builds until it really works!
+#if !defined(__WXMSW__) || defined(_DEBUG)
+// not for Windows release builds until it really works!
 
 int key = KB_UNUSED;
 
@@ -761,7 +817,11 @@ if (!bAllKeys)
 #else
 // not for release builds until it really works!
 int kc = ev.GetKeyCode();
-int key = KbdGui::GetHID(kc);           /* retrieve HID for that key         */
+key = KbdGui::GetHID(kc);               /* retrieve HID for that key         */
+#endif
+
+#if !defined(__WXMSW__)
+// printf("CKbdWnd::OnKeyUp(%d)\n", key);
 #endif
 
 if (key != KB_UNUSED)

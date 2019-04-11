@@ -104,6 +104,10 @@ public:
     KeyLayout *FindMatrix(int row, int col)
       { return matrix2Key[(row << 24) | col]; }
 
+    // Functionality to pass on GUI key events to keyboard window
+    void PassOnKeyDown(wxKeyEvent &ev);
+    void PassOnChar(wxKeyEvent &ev);
+    void PassOnKeyUp(wxKeyEvent &ev);
     // Functionality to prohinit GUI key propagation
     static void HookLLKeyboard(bool bOn = true); // needs a better name sometime
     static void InhibitGuiKey(bool bOn = true);
