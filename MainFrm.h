@@ -69,6 +69,7 @@ enum
 /* CMatrixPanel : a matrix panel and its associated matrix window            */
 /*****************************************************************************/
 
+class CKbdWnd;
 class CMatrixPanel : public wxPanel
 {
 public:
@@ -92,6 +93,8 @@ public:
       { pMatrix->SetKbdMatrix(kbm); }
     void SelectMatrix(int row, int col)
       { pMatrix->SelectMatrix(row, col); }
+    void SetKbdWnd(CKbdWnd *pKbdWnd = NULL)
+      { pMatrix->SetKbdWnd(pKbdWnd); }
 
     bool Layout();
 
@@ -114,6 +117,7 @@ public:
               long style = wxTAB_TRAVERSAL | wxNO_BORDER,
               const wxString& name = wxPanelNameStr);
 
+    CKbdWnd *GetKbdWnd() { return pKbd; }
     void SetKbdLayout(KbdGui const &newlayout)
       { pKbd->SetLayout(newlayout); }
 
@@ -195,6 +199,10 @@ public:
 private:
     wxDECLARE_EVENT_TABLE();
 private:
+    void OnKeyDown(wxKeyEvent &);
+    void OnChar(wxKeyEvent &);
+    void OnKeyUp(wxKeyEvent &);
+
     // void OnHello(wxCommandEvent& event);
     void OnExit(wxCommandEvent& event);
     void OnAbout(wxCommandEvent& event);

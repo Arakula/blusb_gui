@@ -140,25 +140,6 @@ return rc;
 }
 
 /*****************************************************************************/
-/* ReadMatrixLayout : read matrix layout from keyboard                       */
-/*****************************************************************************/
-
-int BlUsbDev::ReadMatrixLayout(int &rows, int &cols)
-{
-if (!IsOpen())
-  return BLUSB_ERROR_NO_DEVICE;
-
-// for now, use a fixed set that matches the original 8x16/8x20 matrix layout
-rows = 8;
-#if 1
-cols = (GetFwVersion() >= 0x0100) ? 20 : 16;
-#else
-cols = 16;
-#endif
-return BLUSB_SUCCESS;
-}
-
-/*****************************************************************************/
 /* EnableServiceMode : put Model M into service mode                         */
 /*****************************************************************************/
 
@@ -288,14 +269,15 @@ int BlUsbDev::ReadLayout(wxUint8 *buffer, int buflen)
 {
 if (!IsOpen())
   return BLUSB_ERROR_NO_DEVICE;
-return ControlTransfer(handle,
-                       BLUSB_RECIPIENT_ENDPOINT |
-                           BLUSB_ENDPOINT_IN |
-                           BLUSB_REQUEST_TYPE_VENDOR,
-                       USB_READ_LAYOUT,
-                       0, 0,
-                       buffer, buflen,
-                       1000);
+int rc = ControlTransfer(handle,
+                         BLUSB_RECIPIENT_ENDPOINT |
+                             BLUSB_ENDPOINT_IN |
+                             BLUSB_REQUEST_TYPE_VENDOR,
+                         USB_READ_LAYOUT,
+                         0, 0,
+                         buffer, buflen,
+                         1000);
+return rc;
 }
 
 /*****************************************************************************/

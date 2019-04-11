@@ -77,8 +77,6 @@ public:
   bool IsOpen() { return !!handle; }
   void Close() { if (IsOpen()) UsbLL::Close(handle); handle = NULL; }
 
-  int ReadMatrixLayout(int &rows, int &cols);
-
   int EnableServiceMode();
   int DisableServiceMode();
 
@@ -101,6 +99,7 @@ public:
   int GetFwMajorVersion() { return blVer[0]; }
   int GetFwMinorVersion() { return blVer[1]; }
   int GetFwVersion() { return (((int)blVer[0]) << 8) | blVer[1]; }
+  void SetFWVersion(int newver) { blVer[0] = (newver >> 8) & 0xff; blVer[1] = newver & 0xff; }
 
 protected:
   void *handle;

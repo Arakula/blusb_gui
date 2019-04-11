@@ -26,6 +26,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 /* CMatrixWnd class declaration                                              */
 /*****************************************************************************/
 
+class CKbdWnd;
 class CMatrixWnd : public wxGrid
 {
 public:
@@ -40,6 +41,7 @@ public:
     int GetLayer() { return layernum; }
     void SetKbdMatrix(KbdMatrix const &kbm);
     void SelectMatrix(int row, int col);
+    void SetKbdWnd(CKbdWnd *pKbdWnd = NULL) { this->pKbdWnd = pKbdWnd; }
 
     wxSize GetMatrixSize()
       { return wxSize(GetColRight(GetNumberCols() - 1),
@@ -69,6 +71,7 @@ private:
 protected:
     int layernum;
     bool bColsRowsSwitched;
+    CKbdWnd *pKbdWnd;
 
 };
 

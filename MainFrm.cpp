@@ -163,6 +163,8 @@ pos = pStatic->GetPosition();
 pos.y += (pLayers->GetSize().GetY() - pStatic->GetSize().GetY()) / 2;
 pStatic->Move(pos);
 
+pKbd = NULL;                            /* keyboard panel not set up yet     */
+
 #ifdef _DEBUG
 if (true)
 #else
@@ -207,7 +209,8 @@ if (sLayout.CmpNoCase("ISO") &&
 if (bLayoutOK)
   {
   GetApp()->SetDefaultLayout(kbdGui);
-  GetApp()->SetLayout(GetApp()->GetDefaultLayout());
+  if (!GetApp()->IsCtlLayoutRead())     /* set layout, unless read from ctl  */
+    GetApp()->SetLayout(GetApp()->GetDefaultLayout());
   kbdGuiLayout = kbdGui;
   }
 
@@ -253,6 +256,7 @@ if (resetExisting)
     }
   }
 
+CKbdWnd *pKbdWnd = pKbd ? pKbd->GetKbdWnd() : NULL;
 for (i = (int)matrices.size(); i < nLayers; i++)
   {
   CMatrixPanel *pNew = CreateMatrixPage(pMatrixNotebook);
@@ -266,6 +270,7 @@ for (i = (int)matrices.size(); i < nLayers; i++)
     kbdLayout[i] = kbdDefault[0];
     }
   pNew->SetKbdMatrix(kbdLayout[i]);
+  pNew->SetKbdWnd(pKbdWnd);
   }
 
 pLayers->SetSelection(nLayers - 1);
@@ -300,10 +305,12 @@ return page;
 void CMainPanel::SetKbdLayout(KbdLayout &layout)
 {
 SetLayers(layout.GetLayers());
+CKbdWnd *pKbdWnd = pKbd->GetKbdWnd();
 for (int i = 0; i < layout.GetLayers(); i++)
   {
   CMatrixPanel *pPanel = matrices[i];
   pPanel->SetKbdMatrix(layout[i]);
+  pPanel->SetKbdWnd(pKbdWnd);
   }
 }
 
@@ -331,6 +338,9 @@ wxBEGIN_EVENT_TABLE(CMainFrame, wxFrame)
     EVT_MENU(Blusb_About, CMainFrame::OnAbout)
 
     EVT_CLOSE(CMainFrame::OnClose)
+    EVT_KEY_DOWN(CMainFrame::OnKeyDown)
+    EVT_CHAR(CMainFrame::OnChar)
+    EVT_KEY_UP(CMainFrame::OnKeyUp)
 
     EVT_TIMER(Blusb_Timer1, CMainFrame::OnReadMatrixTimer)
     EVT_CHOICE(Blusb_LayerCount, CMainFrame::OnLayerCount)
@@ -437,6 +447,7 @@ t.SetOwner(this, Blusb_Timer1);
 t.Start(10);
 
 CreateStatusBar();
+SelectMatrix(0, 0);
 SetStatusText(wxT("Ready"));
 }
 
@@ -729,7 +740,7 @@ if (!m_panel)
 
 int currows, curcols;
 m_panel->GetKbdGuiLayout().GetMatrixLayout(currows, curcols);
-int kbdrows = 8, kbdcols = curcols;
+int kbdrows = NUMROWS, kbdcols = curcols;
 GetApp()->ReadMatrixLayout(kbdrows, kbdcols);
 int newrows, newcols;
 layout.GetMatrixLayout(newrows, newcols);
@@ -762,6 +773,47 @@ if (newrows > 1 && newcols > 1 &&  // <= 1 indicates "no matrix definitions"
   }
 
 return true;
+}
+
+/*****************************************************************************/
+/* OnKeyDown : called when a key is pressed on the window                    */
+/*****************************************************************************/
+
+void CMainFrame::OnKeyDown(wxKeyEvent &ev)
+{
+#if !defined(__WXMSW__)
+wxChar uc = ev.GetKeyCode();
+// printf("CMainFrame::OnKeyDown(%d)\n", uc);
+#endif
+ev.Skip();
+}
+
+/*****************************************************************************/
+/* OnChar : called for character events                                      */
+/*****************************************************************************/
+
+void CMainFrame::OnChar(wxKeyEvent &ev)
+{
+#if !defined(__WXMSW__)
+wxChar uc = ev.GetUnicodeKey();
+if (uc == WXK_NONE)
+  uc = ev.GetKeyCode();
+// printf("CMainFrame::OnChar(%d)\n", uc);
+#endif
+ev.Skip();
+}
+
+/*****************************************************************************/
+/* OnKeyUp : called when a key is released on the window                     */
+/*****************************************************************************/
+
+void CMainFrame::OnKeyUp(wxKeyEvent &ev)
+{
+#if !defined(__WXMSW__)
+wxChar uc = ev.GetKeyCode();
+// printf("CMainFrame::OnKeyUp(%d)\n", uc);
+#endif
+ev.Skip();
 }
 
 /*****************************************************************************/

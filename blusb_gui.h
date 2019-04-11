@@ -61,8 +61,7 @@ public:
       { return dev.GetFwMinorVersion(); }
     int GetFwVersion()
       { return dev.GetFwVersion(); }
-    int ReadMatrixLayout(int &rows, int &cols)
-      { return dev.ReadMatrixLayout(rows, cols); }
+    int ReadMatrixLayout(int &rows, int &cols);
     int ReadMatrixPos(wxUint8 *buffer, int buflen)
       { return dev.ReadMatrix(buffer, buflen); }
     int ReadPWM(wxUint8 &pwmUSB, wxUint8 &pwmBT)
@@ -70,7 +69,7 @@ public:
     int WritePWM(wxUint8 pwmUSB, wxUint8 pwmBT)
       { return dev.WritePWM(pwmUSB, pwmBT); }
     KbdLayout &GetLayout() { return layout; }
-    void SetLayout(KbdLayout const &org) { layout = org; }
+    void SetLayout(KbdLayout const &org) { layout = org; bCtlLayoutRead = false; }
     KbdLayout &GetDefaultLayout(int nNum = -1) { return defaultLayout[nNum < 0 ? curDefaultLayout : nNum]; }
     void SetDefaultLayout(int nNum = 0) { curDefaultLayout = nNum; }
     void SetDefaultLayout(KbdGui const &gui);
@@ -79,6 +78,7 @@ public:
     int ReadLayout(wxString const &filename, KbdLayout *p = NULL);
     int WriteLayout(KbdLayout *p = NULL);
     int WriteLayout(wxString const &filename, bool bNative = true, KbdLayout *p = NULL);
+    bool IsCtlLayoutRead() { return bCtlLayoutRead; }
     bool IsLayoutModified() { return layout.IsModified(); }
     void SetLayoutModified(bool bOn = true) { layout.SetModified(bOn); }
     int ReadDebounce() { return dev.ReadDebounce(); }
@@ -99,13 +99,15 @@ private:
 private:
     void OnActivateApp(wxActivateEvent& event);
 
-protected:
+private:
     BlUsbDev dev;
     bool inServiceMode;
     KbdLayout layout, defaultLayout[2];
     int curDefaultLayout;
     CMainFrame *pMain;
     wxConfigBase *pConfig;
+    bool bCtlLayoutRead;  // flag whether current layout read from keyboard
+    int nDevMatrixRows, nDevMatrixCols;  // attached device's matrix layout
 
 };
 wxDECLARE_APP(CBlusbGuiApp);

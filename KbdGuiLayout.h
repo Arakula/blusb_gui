@@ -267,7 +267,7 @@ class KbdLayout
         for (int r = 0; r < tgtrows; r++)
           for (int c = 0; c < tgtcols; c++)
             {
-            // LSB first, whatever our internal format might be
+            // Controller sends LSB first, whatever our internal format might be
             wxUint16 k = *layout++;
             k += (*layout++) << 8;
             SetKey(l, r, c, k);

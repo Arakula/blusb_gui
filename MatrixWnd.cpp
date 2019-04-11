@@ -21,6 +21,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "layout.h"
 #include "blusb_gui.h"
 
+#include "KbdWnd.h"
 #include "MatrixWnd.h"
 
 #ifndef wxHAS_IMAGES_IN_RESOURCES
@@ -583,6 +584,7 @@ CMatrixWnd::CMatrixWnd
 CreateGrid(0, 0);
 SetOrientation(switched);
 SetLayout(numRows, numCols);
+SetKbdWnd();
 layernum = 0;
 Layout();
 #if 0
@@ -741,6 +743,13 @@ void CMatrixWnd::OnKeyDown(wxKeyEvent &ev)
 #if 1
 //#if defined(__WXMSW__)
 
+#if !defined(__WXMSW__)
+wxChar uc = ev.GetKeyCode();
+// printf("CMatrixWnd::OnKeyDown(%d)%s\n", uc, pKbdWnd ? " pass on" : "");
+if (pKbdWnd)
+  pKbdWnd->PassOnKeyDown(ev);
+#endif
+
 // ignore keys in here. The keyboard window selects the matrix position,
 // so the standard grid behavior would interfere with that.
 ev.Skip(false);
@@ -795,6 +804,15 @@ void CMatrixWnd::OnChar(wxKeyEvent &ev)
 #if 1
 //#if defined(__WXMSW__)
 
+#if !defined(__WXMSW__)
+wxChar uc = ev.GetUnicodeKey();
+if (uc == WXK_NONE)
+  uc = ev.GetKeyCode();
+// printf("CMatrixWnd::OnChar(%d)%s\n", uc, pKbdWnd ? " pass on" : "");
+if (pKbdWnd)
+  pKbdWnd->PassOnChar(ev);
+#endif
+
 // ignore keys in here. The keyboard window selects the matrix position,
 // so the standard grid behavior would interfere with that.
 ev.Skip(false);
@@ -844,6 +862,13 @@ void CMatrixWnd::OnKeyUp(wxKeyEvent &ev)
 {
 #if 1
 //#if defined(__WXMSW__)
+
+#if !defined(__WXMSW__)
+wxChar uc = ev.GetKeyCode();
+// printf("CMatrixWnd::OnKeyUp(%d)%s\n", uc, pKbdWnd ? " pass on" : "");
+if (pKbdWnd)
+  pKbdWnd->PassOnKeyUp(ev);
+#endif
 
 // ignore keys in here. The keyboard window selects the matrix position,
 // so the standard grid behavior would interfere with that.

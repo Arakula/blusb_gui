@@ -93,7 +93,9 @@ CBlusbGuiApp::CBlusbGuiApp()
 {
 pMain = NULL;
 inServiceMode = false;
+bCtlLayoutRead = false;
 curDefaultLayout = 0;
+nDevMatrixRows = nDevMatrixCols = -1;
 }
 
 /*****************************************************************************/
@@ -167,7 +169,7 @@ if (rc != BLUSB_SUCCESS)
   if (wxMessageBox(wxT("Make sure the Model M is connected to a USB port and switched to USB mode.\n\n")
 #ifdef WIN32
                    wxT("If it is: don't panic! This is a simple driver issue. ")
-                   wxT("If you have not already, download Zadig at\n")
+                   wxT("If you have not already, download Zadig from\n")
                    wxT("  http://zadig.akeo.ie")
                    wxT("\nand install the WinUSB driver. ")
                    wxT("If that doesn't work, you can also give the LibUSB-win32 driver a try, whatever is going to work for you.\n")
@@ -284,11 +286,64 @@ SetDefaultLayout(usedef);
 }
 
 /*****************************************************************************/
+/* ReadMatrixLayout : read matrix layout from keyboard                       */
+/*****************************************************************************/
+
+int CBlusbGuiApp::ReadMatrixLayout(int &rows, int &cols)
+{
+if (!dev.IsOpen())
+  return BLUSB_ERROR_NO_DEVICE;
+
+if (nDevMatrixRows > 0)
+  {
+  rows = nDevMatrixRows;
+  cols = nDevMatrixCols;
+  return BLUSB_SUCCESS;
+  }
+
+// read current layout from controller to determine the matrix layout
+
+wxMemoryBuffer mb;                      /* fetch current layout from Model M */
+mb.SetBufSize(4096);
+mb.SetDataLen(4096);                    /* wxWidgets memory buffer needs both*/
+wxUint8 *lbuf = (wxUint8 *)mb.GetData();
+memset(lbuf, 0, 4096);
+int rc = dev.ReadLayout(lbuf, mb.GetDataLen());
+if (rc < BLUSB_SUCCESS)
+  return rc;
+
+int numcols = -1;                       /* calculate # columns in buffer     */
+if (lbuf[0] > 0 &&                      /* did we receive meaningful data?   */
+    lbuf[0] < NUMLAYERS_MAX &&
+    rc > 2)
+  {
+  int layerbytes = (rc - 2) / lbuf[0];  /* if so, look whether it's a        */
+  if (layerbytes * lbuf[0] == (rc - 2)) /* multiple of 20 columns            */
+    {
+    int layercols = layerbytes / (2 * NUMROWS);
+    if (layercols * (2 * NUMROWS) == layerbytes)
+      numcols = layercols;
+
+    rows = nDevMatrixRows = NUMROWS;
+    cols = nDevMatrixCols = numcols;
+    return BLUSB_SUCCESS;
+    }
+  }
+
+return BLUSB_ERROR_NO_DEVICE;
+}
+
+/*****************************************************************************/
 /* ReadLayout : read layout from Model M or file                             */
 /*****************************************************************************/
 
 int CBlusbGuiApp::ReadLayout(KbdLayout *p)
 {
+int numrows = -1, numcols = -1;         /* get rows / columns in buffer      */
+int rc = ReadMatrixLayout(numrows, numcols);
+if (rc < BLUSB_SUCCESS)
+  return rc;
+
 int fwVer = dev.GetFwVersion();
 if (!p)
   p = &layout;
@@ -296,15 +351,27 @@ wxMemoryBuffer mb;                      /* fetch current layout from Model M */
 mb.SetBufSize(4096);
 mb.SetDataLen(4096);                    /* wxWidgets memory buffer needs both*/
 wxUint8 *lbuf = (wxUint8 *)mb.GetData();
-lbuf[0] = 0;
-int rc = dev.ReadLayout(lbuf, mb.GetDataLen());
+memset(lbuf, 0, 4096);
+rc = dev.ReadLayout(lbuf, mb.GetDataLen());
 if (rc < BLUSB_SUCCESS)
   return rc;
+if (rc == 0)                            /* uninitialized controller ?        */
+  {
+#if 0
+  // this could be used for automatic controller initialization
+  lbuf[0] = 1;                          /* write out an empty layer          */
+  if (dev.WriteLayout(lbuf, mb.GetDataLen()) >= BLUSB_SUCCESS)
+    {
+    lbuf[0] = 0;                        /* then read again                   */
+    rc = dev.ReadLayout(lbuf, mb.GetDataLen());
+    }
+#endif
+  }
 
 wxUint8 *macbuf = NULL;
 int macsize = 0;
 wxMemoryBuffer macmb;
-if (fwVer >= 0x0100)
+if (fwVer >= 0x0104)                    /* known first macro container       */
   {
   macmb.SetBufSize(1024);
   macmb.SetDataLen(1024);               /* wxWidgets memory buffer needs both*/
@@ -314,10 +381,10 @@ if (fwVer >= 0x0100)
     macsize = 0;
   }
 
-int numcols = (fwVer >= 0x0100) ? NUMCOLS : OLD_NUMCOLS;
-if (!p->Import(lbuf, mb.GetBufSize(), NUMROWS, numcols,
+if (!p->Import(lbuf, mb.GetBufSize(), numrows, numcols,
                macbuf, macsize))
   return -103;
+bCtlLayoutRead = true;
 return BLUSB_SUCCESS;
 }
 
@@ -325,7 +392,10 @@ int CBlusbGuiApp::ReadLayout(wxString const &filename, KbdLayout *p)
 {
 if (!p)
   p = &layout;
-return p->ReadFile(filename) ? BLUSB_SUCCESS : -100;
+bool bOK = p->ReadFile(filename);
+if (bOK)
+  bCtlLayoutRead = false;
+return bOK ? BLUSB_SUCCESS : -100;
 }
 
 /*****************************************************************************/
@@ -334,16 +404,33 @@ return p->ReadFile(filename) ? BLUSB_SUCCESS : -100;
 
 int CBlusbGuiApp::WriteLayout(KbdLayout *p)
 {
-if (!p)
-  p = &layout;
 wxMemoryBuffer mb;                      /* write current layout to Model M   */
 mb.SetBufSize(4096);
 mb.SetDataLen(4096);                    /* wxWidgets memory buffer needs both*/
+wxUint8 *lbuf = (wxUint8 *)mb.GetData();
 int lbufsz = mb.GetDataLen();
-int numcols = (dev.GetFwVersion() >= 0x0100) ? NUMCOLS : OLD_NUMCOLS;
-if (!p->Export((wxUint8 *)mb.GetData(), lbufsz, NUMROWS, numcols))
+
+int numrows = -1, numcols = -1;         /* get rows / columns in buffer      */
+int rc = ReadMatrixLayout(numrows, numcols);
+if (rc < BLUSB_SUCCESS)                 /* matrix not determined?            */
+  {
+  if (dev.IsOpen())                     /* ... mhm. Empty controller?        */
+    {
+    // try automatic controller initialization
+    memset(lbuf, 0, lbufsz);
+    lbuf[0] = 1;                        /* write out an empty layer          */
+    if (dev.WriteLayout(lbuf, lbufsz) >= BLUSB_SUCCESS)
+      rc = ReadMatrixLayout(numrows, numcols);
+    }
+  if (rc < BLUSB_SUCCESS)
+    return rc;
+  }
+
+if (!p)
+  p = &layout;
+if (!p->Export(lbuf, lbufsz, numrows, numcols))
   return BLUSB_ERROR_OVERFLOW;
-int rc = dev.WriteLayout((wxUint8*)mb.GetData(), lbufsz);
+rc = dev.WriteLayout(lbuf, lbufsz);
 if (rc >= BLUSB_SUCCESS)
   {
   // Macros
