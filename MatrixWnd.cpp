@@ -713,7 +713,17 @@ if (numCols > oldCols)
 
 void CMatrixWnd::SetKbdMatrix(KbdMatrix const &kbm)
 {
+#if 1
+// fixed 8x20 matrix layout
+SetLayout(NUMROWS, NUMCOLS);
+#else
+// matrix layour determined by keyboard definition
 SetLayout(kbm.GetRows(), kbm.GetCols());
+#endif
+// if controller doesn't have that many columns, mark unusable ones
+int ctlrows = NUMROWS, ctlcols = NUMCOLS;
+GetApp()->ReadMatrixLayout(ctlrows, ctlcols);
+wxColour clrUnusable = wxSystemSettings::GetColour(wxSYS_COLOUR_FRAMEBK);
 for (int i = 0; i < GetNumberCols(); i++)
   for (int j = 0; j < GetNumberRows(); j++)
     {
@@ -721,6 +731,8 @@ for (int i = 0; i < GetNumberCols(); i++)
     int r(i), c(j);
     RC2Internal(r, c);
     SetCellValue(r, c, hid2Text[key]);
+    if (r >= ctlcols || c >= ctlrows)
+      SetCellBackgroundColour(r, c, clrUnusable);
     }
 wxSize szNew(GetMatrixSize());
 SetSize(szNew);
