@@ -167,9 +167,12 @@ if (rc != BLUSB_SUCCESS)
   {
   // dev.Close();
   if (wxMessageBox(wxT("Make sure the Model M is connected to a USB port and switched to USB mode.\n\n")
+				   wxT("If it is, and has never been initialized before, just continue. ")
+				   wxT("As soon as a layout has been sent to the keyboard, this message will disappear.\n")
 #ifdef WIN32
-                   wxT("If it is: don't panic! This is a simple driver issue. ")
-                   wxT("If you have not already, download Zadig from\n")
+                   wxT("If it is, and has been initialized, and its firmware is V1.04 or below: ")
+                   wxT("don't panic! This is a simple driver issue. ")
+                   wxT("If you have not already done so, download Zadig from\n")
                    wxT("  http://zadig.akeo.ie")
                    wxT("\nand install the WinUSB driver. ")
                    wxT("If that doesn't work, you can also give the LibUSB-win32 driver a try, whatever is going to work for you.\n")
@@ -183,6 +186,9 @@ if (rc != BLUSB_SUCCESS)
                    wxYES_NO | wxCENTRE | wxICON_QUESTION) != wxYES)
     return false;
   }
+
+if (GetFwVersion() >= 0x0105)           /* V1.5 and above is always in       */
+  inServiceMode = true;                 /* "service mode".                   */
 
 // install hook and disable GUI keys
 CKbdWnd::HookLLKeyboard(true);
@@ -312,21 +318,34 @@ int rc = dev.ReadLayout(lbuf, mb.GetDataLen());
 if (rc < BLUSB_SUCCESS)
   return rc;
 
+int fwVer = dev.GetFwVersion();
+int numlayers_max = (fwVer < 0x0105) ? NUMLAYERS_MAX_OLD : NUMLAYERS_MAX;
+int numlayers_bytes = (fwVer < 0x0105) ? 2 : 1;
 int numcols = -1;                       /* calculate # columns in buffer     */
 if (lbuf[0] > 0 &&                      /* did we receive meaningful data?   */
-    lbuf[0] < NUMLAYERS_MAX &&
-    rc > 2)
+    lbuf[0] <= numlayers_max &&
+    rc > numlayers_bytes)
   {
-  int layerbytes = (rc - 2) / lbuf[0];  /* if so, look whether it's a        */
-  if (layerbytes * lbuf[0] == (rc - 2)) /* multiple of 20 columns            */
+  if (fwVer >= 0x0105)  // this is DEFINITELY 20.
     {
-    int layercols = layerbytes / (2 * NUMROWS);
-    if (layercols * (2 * NUMROWS) == layerbytes)
-      numcols = layercols;
-
     rows = nDevMatrixRows = NUMROWS;
-    cols = nDevMatrixCols = numcols;
+    cols = nDevMatrixCols = NUMCOLS;
     return BLUSB_SUCCESS;
+    }
+  else
+    {
+    // if so, look whether it's a multiple of 20 columns
+    int layerbytes = (rc - numlayers_bytes) / lbuf[0];
+    if (layerbytes * lbuf[0] == (rc - numlayers_bytes))
+      {
+      int layercols = layerbytes / (2 * NUMROWS);
+      if (layercols * (2 * NUMROWS) == layerbytes)
+        numcols = layercols;
+
+      rows = nDevMatrixRows = NUMROWS;
+      cols = nDevMatrixCols = numcols;
+      return BLUSB_SUCCESS;
+      }
     }
   }
 
@@ -382,7 +401,7 @@ if (fwVer >= 0x0104)                    /* known first macro container       */
   }
 
 if (!p->Import(lbuf, mb.GetBufSize(), numrows, numcols,
-               macbuf, macsize))
+	macbuf, macsize, (fwVer >= 0x0105) ? 1 : 0))
   return -103;
 bCtlLayoutRead = true;
 return BLUSB_SUCCESS;
@@ -410,6 +429,8 @@ mb.SetDataLen(4096);                    /* wxWidgets memory buffer needs both*/
 wxUint8 *lbuf = (wxUint8 *)mb.GetData();
 int lbufsz = mb.GetDataLen();
 
+int fwVer = dev.GetFwVersion();
+
 int numrows = -1, numcols = -1;         /* get rows / columns in buffer      */
 int rc = ReadMatrixLayout(numrows, numcols);
 if (rc < BLUSB_SUCCESS)                 /* matrix not determined?            */
@@ -428,7 +449,7 @@ if (rc < BLUSB_SUCCESS)                 /* matrix not determined?            */
 
 if (!p)
   p = &layout;
-if (!p->Export(lbuf, lbufsz, numrows, numcols))
+if (!p->Export(lbuf, lbufsz, numrows, numcols, (fwVer >= 0x0105) ? 1 : 0))
   return BLUSB_ERROR_OVERFLOW;
 rc = dev.WriteLayout(lbuf, lbufsz);
 if (rc >= BLUSB_SUCCESS)

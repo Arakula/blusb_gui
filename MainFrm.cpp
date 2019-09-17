@@ -321,7 +321,8 @@ for (int i = 0; i < layout.GetLayers(); i++)
 void CMainPanel::SelectMatrix(int row, int col)
 {
 CMatrixPanel *pPanel = (CMatrixPanel *)pMatrixNotebook->GetCurrentPage();
-pPanel->SelectMatrix(row, col);
+if (pPanel)
+  pPanel->SelectMatrix(row, col);
 }
 
 
@@ -385,6 +386,8 @@ SetIcon(wxICON(Application));
 wxMenu *menuFile = new wxMenu;
 menuFile->Append(wxID_EXIT);
 
+memset(bufferLast, 0xff, sizeof(bufferLast));
+
 wxMenu *menuLayout = new wxMenu;
 menuLayout->Append(Blusb_ResetLayout, wxT("Reset Layout"),
                  wxT("Reset layout to default values"));
@@ -399,8 +402,10 @@ menuLayout->Append(Blusb_WriteFile, wxT("Save to File..."),
                    wxT("Read layout from attached Model M keyboard"));
   menuLayout->Append(Blusb_WriteLayout, wxT("Write Layout"),
                    wxT("Write layout to attached Model M keyboard"));
-  menuLayout->AppendCheckItem(Blusb_ServiceMode, wxT("Service Mode"),
-                   wxT("Put attached Model M keyboard into Service Mode"));
+  // Enable / Disable Service Mode is not available in V1.5 and later
+  if (GetApp()->GetFwVersion() < 0x0105)
+    menuLayout->AppendCheckItem(Blusb_ServiceMode, wxT("Service Mode"),
+                     wxT("Put attached Model M keyboard into Service Mode"));
   }
 menuLayout->AppendSeparator();
 menuLayout->Append(Blusb_Kbd_ANSI, wxT("ANSI Keyboard Layout"),
@@ -442,12 +447,13 @@ SetMenuBar( menuBar );
 // to the keyboard
 m_panel = new CMainPanel(this);
 
+CreateStatusBar();
+SelectMatrix(0, 0);
+
 // set up 10ms timer
 t.SetOwner(this, Blusb_Timer1);
 t.Start(10);
 
-CreateStatusBar();
-SelectMatrix(0, 0);
 SetStatusText(wxT("Ready"));
 }
 
@@ -508,9 +514,11 @@ wxMessageBox(wxT("Graphical BlUSB Layout Configuration Tool\n\n")
 void CMainFrame::OnReadMatrixTimer(wxTimerEvent& event)
 {
 wxUint8 buffer[sizeof(bufferLast)];
+memset(buffer, 0xff, sizeof(buffer));
 if (GetApp()->IsDevOpen() && GetApp()->InServiceMode())
   {
-  if (GetApp()->ReadMatrixPos(buffer, sizeof(buffer)) >= BLUSB_SUCCESS)
+  int rc = GetApp()->ReadMatrixPos(buffer, sizeof(buffer));
+  if (rc >= sizeof(bufferLast))
     {
     bool bChanged = false;
     if (buffer[7])

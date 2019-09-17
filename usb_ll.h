@@ -37,11 +37,15 @@ struct UsbLLDevDesc
   std::string VendorName;
   std::string ProductName;
   std::string SerialNumber;
+  // purely informational items:
+  unsigned char Bus;
+  unsigned char DeviceAddress;
   UsbLLDevDesc()
     {
     VendorID = ProductID = (unsigned short )-1;
     UsageID = UsagePage = (unsigned short )-1;
     VersionNumber = 0;
+    Bus = DeviceAddress = 0;
     }
   };
 

@@ -44,6 +44,8 @@ public:
     int EnableServiceMode()
       {
       int rc = dev.EnableServiceMode();
+      if (GetFwVersion() >= 0x0105)     /* in V1.5++, it's always on.        */
+        rc = BLUSB_SUCCESS;
       inServiceMode = (rc >= BLUSB_SUCCESS);
       return rc;
       }

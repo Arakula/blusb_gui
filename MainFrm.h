@@ -122,11 +122,11 @@ public:
       { pKbd->SetLayout(newlayout); }
 
     void SetKeyState(int hidcode, int newstate)
-      { pKbd->SetKeyState(hidcode, newstate); }
+      { if (pKbd) pKbd->SetKeyState(hidcode, newstate); }
     void SetKeyState(int matrixrow, int matrixcol, int newstate)
-      { pKbd->SetKeyState(matrixrow, matrixcol, newstate); }
+      { if (pKbd) pKbd->SetKeyState(matrixrow, matrixcol, newstate); }
     void ResetKeyState()
-      { pKbd->ResetKeyState(); }
+      { if (pKbd) pKbd->ResetKeyState(); }
 
     wxColour const &GetKbdBkgndColour()
       { return pKbd->GetBkgndColour(); }

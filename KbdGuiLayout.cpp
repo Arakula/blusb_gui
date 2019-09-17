@@ -743,13 +743,46 @@ else if (isspace(c) || isdigit(c))
     wxUint16 cc = -1;
     const char *pcs = mbLine;
     int curpos = 0;
+
+    // first, try to determine the format (dec or hex)
+    bool hasHex = false, hasDec = false, bCorrFmt = true;
+    for (size_t i = 0; bCorrFmt && i < mbLine.GetDataLen(); i++)
+      {
+      const char c = pcs[i];
+      if (isdigit(c))
+        hasDec = true;
+      else if (isxdigit(c))
+        hasHex = true;
+      else if (c != ' ' && c != ',' && c != '\0')
+        bCorrFmt = false;
+      }
+    if (!hasDec && !hasHex)
+      bCorrFmt = false;
+    if (!bCorrFmt)
+      return false;
+    // Now we know whether there's hex or dec chars in there.
+    // While this is NOT enough to determine the file type with
+    // absolute certainty, it SHOULD be enough. A layout which only
+    // contains hex values that can also be read as decimal is
+    // highly unlikely.
+    const int mult = hasHex ? 16 : 10;
     for (size_t i = 0; i < mbLine.GetDataLen(); i++)
       {
       if (isdigit(pcs[i]))
         {
         if (cc == (wxUint16)-1)
           cc = 0;
-        cc = cc * 10 + (pcs[i] - '0');
+        cc = cc * mult + (pcs[i] - '0');
+        }
+      else if (isxdigit(pcs[i]))
+        {
+        // this is A-F | a-f, as 0-9 has already been processed above
+        if (cc == (wxUint16)-1)
+          cc = 0;
+        char c = pcs[i];
+        if (c >= 'a' && c <= 'f')
+          c -= ('a' - 'A');
+        cc = cc * mult + (c - ('A' - 10));
         }
       else if (pcs[i] == ',' || pcs[i] == '\0')
         {
@@ -851,7 +884,13 @@ else                                    /* write in Joern's text format      */
         {
         if (s.size())
           s += wxT(", ");
+#if 1
+        // Joern switched from decimal to hexadecimal format in V1.5.
+        // As I don't want to include a special switch here, just go with that.
+        s += wxString::Format("%X", GetKey(l, r, c));
+#else
         s += wxString::Format("%d", GetKey(l, r, c));
+#endif
         }
     s += (l < GetLayers() - 1) ? wxT("\n\n") : wxT("\n");
     const char *ps = (const char *)s;

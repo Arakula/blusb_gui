@@ -235,7 +235,8 @@ class KbdLayout
     // import layout in Model M USB transfer format
     bool Import(wxUint8 *layout, int bufsize /* in bytes! */ = -1,
                 int tgtrows = NUMROWS, int tgtcols = NUMCOLS,
-                wxUint8 *macrobuf = NULL, int macrosize = 0)
+                wxUint8 *macrobuf = NULL, int macrosize = 0,
+				int transformat = 0)  // 0=V<1.5, 1=V>=1.5
       {
       int newLayers = layout[0];  // sanitize
       newLayers = max(min(newLayers, NUMLAYERS_MAX), 0);
@@ -262,7 +263,10 @@ class KbdLayout
           memset(pmac, KB_UNUSED, LEN_MACRO);
         }
       Resize(newLayers, tgtrows, tgtcols, macros);
-      layout += sizeof(wxUint16);
+	  if (transformat == 1)
+        layout += sizeof(wxUint8);
+	  else
+        layout += sizeof(wxUint16);
       for (int l = 0; l < newLayers; l++)
         for (int r = 0; r < tgtrows; r++)
           for (int c = 0; c < tgtcols; c++)
@@ -278,13 +282,18 @@ class KbdLayout
       }
     // export layout to Model M USB transfer format
     bool Export(wxUint8 *buf, int &bufsize /* in bytes!*/,
-                int tgtrows = NUMROWS, int tgtcols = NUMCOLS)
+                int tgtrows = NUMROWS, int tgtcols = NUMCOLS,
+				int transformat = 1)  // 0=V<1.5, 1=V>=1.5
       {
       if (bufsize < 1 + (int)sizeof(wxUint16) * (layers * tgtrows * tgtcols))
         return false;
-      bufsize = 1 + (int)sizeof(wxUint16) * (layers * tgtrows * tgtcols);
-      *buf++ = layers;
-      for (int l = 0; l < layers; l++)
+	  // restrict to maximum layers for the device!
+	  int ilayers = layers;
+	  if (transformat == 0 && ilayers > NUMLAYERS_MAX_OLD)
+		  ilayers = NUMLAYERS_MAX_OLD;
+      bufsize = 1 + (int)sizeof(wxUint16) * (ilayers * tgtrows * tgtcols);
+      *buf++ = ilayers;
+      for (int l = 0; l < ilayers; l++)
         for (int r = 0; r < tgtrows; r++)
           for (int c = 0; c < tgtcols; c++)
             {

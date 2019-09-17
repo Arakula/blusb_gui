@@ -140,9 +140,12 @@ bool UsbLL::Initialize()
 {
 #if USE_LIBUSB
 
+bool bOK = true;
+
 if (!IsInitialized())
-  return (libusb_init((UsbLLContext **)&ctx) == LIBUSB_SUCCESS);
-return true;
+  bOK = (libusb_init((UsbLLContext **)&ctx) == LIBUSB_SUCCESS);
+
+return bOK;
 
 #else
 
@@ -310,6 +313,8 @@ if (rc >= 0)
   desc.VendorName = "";
   desc.ProductName = "";
   desc.SerialNumber = "";
+  desc.Bus = libusb_get_bus_number((libusb_device *)dev);
+  desc.DeviceAddress = libusb_get_device_address((libusb_device *)dev);
   libusb_device_handle *handle = NULL;
   int rc = libusb_open((libusb_device *)dev, &handle);
   if (rc == LIBUSB_SUCCESS)
