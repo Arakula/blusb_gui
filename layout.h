@@ -20,6 +20,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #ifndef _layout_h__included_
 #define _layout_h__included_
 
+#define MAX_FW_VER     0x0105 // maximum firmware version known
 #define NUMLAYERS_MAX_OLD  6  // pre-1.5 maximum
 #define NUMLAYERS_MAX  8
 #define NUMLAYERS      2

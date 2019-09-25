@@ -59,6 +59,9 @@ enum blusb_error {
     BLUSB_ERROR_NO_MEM = -11,
     BLUSB_ERROR_NOT_SUPPORTED = -12,
     BLUSB_ERROR_OTHER = -99,
+
+    // our private codes
+    BLUSB_ERROR_NO_LAYOUT = -1000,
 };
 #endif
 

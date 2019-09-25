@@ -75,7 +75,7 @@ protected:
 
 };
 
-void SetupText2HIDMapping();
+void SetupText2HIDMapping(wxUint16 fwVer = MAX_FW_VER);
 void RemoveText2HIDMapping();
 
 

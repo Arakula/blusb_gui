@@ -57,8 +57,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,7,0,1
- PRODUCTVERSION 0,7,0,1
+ FILEVERSION 0,8,0,1
+ PRODUCTVERSION 0,8,0,1
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -76,12 +76,12 @@ BEGIN
             VALUE "Comments", "BlUSB GUI"
             VALUE "CompanyName", "Hermann Seib"
             VALUE "FileDescription", "Graphical BlUSB Layout Configuration Tool"
-            VALUE "FileVersion", "0.07"
+            VALUE "FileVersion", "0.08"
             VALUE "InternalName", "blusb_gui"
             VALUE "LegalCopyright", "Copyright (C) 2017-19 H. Seib"
             VALUE "OriginalFilename", "blusb_gui.exe"
             VALUE "ProductName", "Graphical BlUSB Layout Configuration Tool"
-            VALUE "ProductVersion", "0.07"
+            VALUE "ProductVersion", "0.08"
         END
     END
     BLOCK "VarFileInfo"

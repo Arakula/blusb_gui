@@ -287,19 +287,22 @@ int BlUsbDev::ReadVersion(wxUint8 *buffer, int buflen)
 if (!IsOpen())
   return BLUSB_ERROR_NO_DEVICE;
 
-// first, try V1.5++ method
+int rc = 0;
 hid_ctrl_report_t ctrl = {0};
+// this one is needed to DETERMINE the version ...
+// if (GetFwVersion() >= 0x0105)
+// so first, try V1.5++ method
 ctrl.id = HID_REPORT_ID_FEATURE_READ_VERSION;
-int rc = ControlTransfer(handle,
-                         BLUSB_RECIPIENT_INTERFACE |
-                             BLUSB_ENDPOINT_IN |
-                             BLUSB_REQUEST_TYPE_CLASS,
-                         BLUSB_REQUEST_GET_REPORT,
-                         BLUSB_REQUEST_FEATURE_REPORT |
-                             HID_REPORT_ID_FEATURE_READ_VERSION,
-                         0,
-                         ctrl.buffer, sizeof(ctrl.buffer),
-                         1000);
+rc = ControlTransfer(handle,
+                     BLUSB_RECIPIENT_INTERFACE |
+                         BLUSB_ENDPOINT_IN |
+                         BLUSB_REQUEST_TYPE_CLASS,
+                     BLUSB_REQUEST_GET_REPORT,
+                     BLUSB_REQUEST_FEATURE_REPORT |
+                         HID_REPORT_ID_FEATURE_READ_VERSION,
+                     0,
+                     ctrl.buffer, sizeof(ctrl.buffer),
+                     1000);
 // if that did not return a sufficiently large buffer, try old method
 if (rc < 2)
   {
@@ -315,6 +318,13 @@ if (rc < 2)
 if (rc >= BLUSB_SUCCESS)
   for (int i = 0; i < rc && i < buflen; i++)
     buffer[i] = ctrl.buffer[i];
+#ifdef WIN32
+else // obviously a pre-v1.5 keyboard with standard HID driver
+  {  // so treat it as v1.4 - everything will fail, however.
+  buffer[0] = 0x01;
+  buffer[1] = 0x04;
+  }
+#endif
 return rc > buflen ? buflen : rc;
 }
 
@@ -328,19 +338,23 @@ pwmUSB = pwmBT = 0;
 if (!IsOpen())
   return BLUSB_ERROR_NO_DEVICE;
 
-// first, try V1.5++ method
+int rc = 0;
 hid_ctrl_report_t ctrl = {0};
-ctrl.id = HID_REPORT_ID_FEATURE_READ_WRITE_BR;
-int rc = ControlTransfer(handle,
-                         BLUSB_RECIPIENT_INTERFACE |
-                             BLUSB_ENDPOINT_IN |
-                             BLUSB_REQUEST_TYPE_CLASS,
-                         BLUSB_REQUEST_GET_REPORT,
-                         BLUSB_REQUEST_FEATURE_REPORT |
-                             HID_REPORT_ID_FEATURE_READ_WRITE_BR,
-                         0,
-                         ctrl.buffer, sizeof(ctrl.buffer),
-                         1000);
+if (GetFwVersion() >= 0x0105)
+  {
+  // try V1.5++ method
+  ctrl.id = HID_REPORT_ID_FEATURE_READ_WRITE_BR;
+  rc = ControlTransfer(handle,
+                       BLUSB_RECIPIENT_INTERFACE |
+                           BLUSB_ENDPOINT_IN |
+                           BLUSB_REQUEST_TYPE_CLASS,
+                       BLUSB_REQUEST_GET_REPORT,
+                       BLUSB_REQUEST_FEATURE_REPORT |
+                           HID_REPORT_ID_FEATURE_READ_WRITE_BR,
+                       0,
+                       ctrl.buffer, sizeof(ctrl.buffer),
+                       1000);
+  }
 // if that did not return a sufficiently large buffer, try old method
 if (rc < 2)
   {
@@ -369,34 +383,38 @@ int BlUsbDev::WritePWM(wxUint8 pwmUSB, wxUint8 pwmBT)
 if (!IsOpen())
   return BLUSB_ERROR_NO_DEVICE;
 
-// first, try V1.5++ method
-hid_ctrl_report_t ctrl = {0};
-ctrl.id = HID_REPORT_ID_FEATURE_READ_WRITE_BR;
-ctrl.payload[0] = pwmUSB;
-ctrl.payload[1] = pwmBT;
+int rc = BLUSB_ERROR_INVALID_PARAM;
+if (GetFwVersion() >= 0x0105)
+  {
+  // first, try V1.5++ method
+  hid_ctrl_report_t ctrl = {0};
+  ctrl.id = HID_REPORT_ID_FEATURE_READ_WRITE_BR;
+  ctrl.payload[0] = pwmUSB;
+  ctrl.payload[1] = pwmBT;
 
-int rc = ControlTransfer(handle,
-                         BLUSB_RECIPIENT_INTERFACE |
-                             BLUSB_ENDPOINT_OUT |
-                             BLUSB_REQUEST_TYPE_CLASS,
-                         BLUSB_REQUEST_SET_REPORT,
-                         BLUSB_REQUEST_FEATURE_REPORT |
-                             HID_REPORT_ID_FEATURE_READ_WRITE_BR,
-                         0,
-                         ctrl.buffer, sizeof(ctrl.buffer),
-                         1000);
+  rc = ControlTransfer(handle,
+                       BLUSB_RECIPIENT_INTERFACE |
+                           BLUSB_ENDPOINT_OUT |
+                           BLUSB_REQUEST_TYPE_CLASS,
+                       BLUSB_REQUEST_SET_REPORT,
+                       BLUSB_REQUEST_FEATURE_REPORT |
+                           HID_REPORT_ID_FEATURE_READ_WRITE_BR,
+                       0,
+                       ctrl.buffer, sizeof(ctrl.buffer),
+                       1000);
+  }
 // if that did not return OK, try old method
 if (rc < BLUSB_SUCCESS)
   {
   wxUint8 buffer[8] = { pwmUSB, pwmBT, 0 };
-  return ControlTransfer(handle,
-                         BLUSB_RECIPIENT_INTERFACE |
-                             BLUSB_ENDPOINT_OUT |
-                             BLUSB_REQUEST_TYPE_VENDOR,
-                         USB_WRITE_BR,
-                         0, 0,
-                         buffer, sizeof(buffer),
-                         1000);
+  rc = ControlTransfer(handle,
+                       BLUSB_RECIPIENT_INTERFACE |
+                           BLUSB_ENDPOINT_OUT |
+                           BLUSB_REQUEST_TYPE_VENDOR,
+                       USB_WRITE_BR,
+                       0, 0,
+                       buffer, sizeof(buffer),
+                       1000);
   }
 return rc;
 }
@@ -410,19 +428,25 @@ int BlUsbDev::ReadMatrix(wxUint8 *buffer, int buflen)
 if (!IsOpen())
   return BLUSB_ERROR_NO_DEVICE;
 
-// first, try V1.5++ method
-hid_ctrl_report_t ctrl = {0};
-ctrl.id = HID_REPORT_ID_FEATURE_READ_MATRIX;
-int rc = ControlTransfer(handle,
-                         BLUSB_RECIPIENT_INTERFACE |
-                             BLUSB_ENDPOINT_IN |
-                             BLUSB_REQUEST_TYPE_CLASS,
-                         BLUSB_REQUEST_GET_REPORT,
-                         BLUSB_REQUEST_FEATURE_REPORT |
-                             HID_REPORT_ID_FEATURE_READ_MATRIX,
-                         0,
-                         ctrl.buffer, sizeof(ctrl.buffer),
-                         1000);
+int rc = 0;
+if (GetFwVersion() >= 0x0105)
+  {
+  // first, try V1.5++ method
+  hid_ctrl_report_t ctrl = {0};
+  ctrl.id = HID_REPORT_ID_FEATURE_READ_MATRIX;
+  rc = ControlTransfer(handle,
+                       BLUSB_RECIPIENT_INTERFACE |
+                           BLUSB_ENDPOINT_IN |
+                           BLUSB_REQUEST_TYPE_CLASS,
+                       BLUSB_REQUEST_GET_REPORT,
+                       BLUSB_REQUEST_FEATURE_REPORT |
+                           HID_REPORT_ID_FEATURE_READ_MATRIX,
+                       0,
+                       ctrl.buffer, sizeof(ctrl.buffer),
+                       1000);
+  if (rc >= 2)
+    memcpy(buffer, ctrl.buffer, min(buflen, rc));
+  }
 // if that did not return a sufficiently large buffer, try old method
 if (rc < 2)
   {
@@ -439,8 +463,6 @@ if (rc < 2)
                       buffer, buflen,
                       1000);
   }
-else
-  memcpy(buffer, ctrl.buffer, min(buflen, rc));
 return rc;
 }
 
@@ -453,14 +475,17 @@ int BlUsbDev::ReadLayout(wxUint8 *buffer, int buflen)
 if (!IsOpen())
   return BLUSB_ERROR_NO_DEVICE;
 
-// first, try V1.5++ method
-hid_layout_data_report_t layout = {0};
-layout.id = HID_REPORT_ID_FEATURE_READ_WRITE_LAYOUT;
-int rc = BLUSB_SUCCESS;
-int totlen = 0;
-while (rc >= BLUSB_SUCCESS)
+int rc = BLUSB_ERROR_INVALID_PARAM;
+if (GetFwVersion() >= 0x0105)
   {
-  rc = ControlTransfer(handle,
+  // first, try V1.5++ method
+  hid_layout_data_report_t layout = {0};
+  layout.id = HID_REPORT_ID_FEATURE_READ_WRITE_LAYOUT;
+
+  int totlen = 0;
+  while (rc >= BLUSB_SUCCESS)
+    {
+    rc = ControlTransfer(handle,
                          BLUSB_RECIPIENT_INTERFACE |
                              BLUSB_ENDPOINT_IN |
                              BLUSB_REQUEST_TYPE_CLASS,
@@ -470,24 +495,25 @@ while (rc >= BLUSB_SUCCESS)
                          0,
                          layout.buffer, sizeof(layout.buffer),
                          1000);
-  if (rc >= sizeof(layout.buffer))
-    {
-    if (layout.num_pgs < 1)
-      break;
-    if (layout.pg_cnt < 1)
-      return BLUSB_ERROR_OTHER;
-    int tgtoff = SPM_PAGESIZE*(layout.pg_cnt - 1);
-    if (tgtoff + SPM_PAGESIZE <= buflen)
+    if (rc >= sizeof(layout.buffer))
       {
-      memcpy(buffer + tgtoff, layout.page_data, SPM_PAGESIZE);
-      if (tgtoff + SPM_PAGESIZE > totlen)
-          totlen = tgtoff + SPM_PAGESIZE;
+      if (layout.num_pgs < 1)
+        break;
+      if (layout.pg_cnt < 1)
+        return BLUSB_ERROR_OTHER;
+      int tgtoff = SPM_PAGESIZE*(layout.pg_cnt - 1);
+      if (tgtoff + SPM_PAGESIZE <= buflen)
+        {
+        memcpy(buffer + tgtoff, layout.page_data, SPM_PAGESIZE);
+        if (tgtoff + SPM_PAGESIZE > totlen)
+            totlen = tgtoff + SPM_PAGESIZE;
+        }
       }
+    if (rc < 3 || layout.pg_cnt >= layout.num_pgs)
+      break;
     }
-  if (rc < 3 || layout.pg_cnt >= layout.num_pgs)
-    break;
+  rc = totlen;
   }
-rc = totlen;
 
 // if that did not work, try old method
 if (rc < 0)
@@ -513,46 +539,49 @@ int BlUsbDev::WriteLayout(wxUint8 *buffer, int buflen)
 if (!IsOpen())
   return BLUSB_ERROR_NO_DEVICE;
 
-int rc;
-// first, try V1.5++ method
-hid_layout_data_report_t layout = {0};
-layout.id = HID_REPORT_ID_FEATURE_READ_WRITE_LAYOUT;
-// calculate number of pages necessary
-layout.num_pgs = (buflen + SPM_PAGESIZE - 1) / SPM_PAGESIZE;
-// set current page, starting with 1
-layout.pg_cnt = 1;
+int rc = BLUSB_ERROR_INVALID_PARAM;
 int sent = 0;
-while (1)
+if (GetFwVersion() >= 0x0105)
   {
-  // fill layout buffer and send
-  int pgoff = SPM_PAGESIZE*(layout.pg_cnt - 1);
-  int pglen = min(SPM_PAGESIZE, buflen - pgoff);
-  memcpy(layout.page_data, buffer + pgoff, pglen);
-  if (pglen < SPM_PAGESIZE)
-    memset(layout.page_data + pglen, 0, SPM_PAGESIZE - pglen);
-
-  rc = ControlTransfer(handle,
-                       BLUSB_RECIPIENT_INTERFACE |
-                           BLUSB_ENDPOINT_OUT |
-                           BLUSB_REQUEST_TYPE_CLASS,
-                       BLUSB_REQUEST_SET_REPORT,
-                       BLUSB_REQUEST_FEATURE_REPORT |
-                           HID_REPORT_ID_FEATURE_READ_WRITE_LAYOUT,
-                       0,
-                       layout.buffer, sizeof(layout.buffer),
-                       1000);
-  if (rc < BLUSB_SUCCESS)
-    break;
-  sent += rc - 3;
-  if (layout.pg_cnt == layout.num_pgs)
+  // first, try V1.5++ method
+  hid_layout_data_report_t layout = {0};
+  layout.id = HID_REPORT_ID_FEATURE_READ_WRITE_LAYOUT;
+  // calculate number of pages necessary
+  layout.num_pgs = (buflen + SPM_PAGESIZE - 1) / SPM_PAGESIZE;
+  // set current page, starting with 1
+  layout.pg_cnt = 1;
+  while (1)
     {
-    rc = sent;
-    break;
+    // fill layout buffer and send
+    int pgoff = SPM_PAGESIZE*(layout.pg_cnt - 1);
+    int pglen = min(SPM_PAGESIZE, buflen - pgoff);
+    memcpy(layout.page_data, buffer + pgoff, pglen);
+    if (pglen < SPM_PAGESIZE)
+      memset(layout.page_data + pglen, 0, SPM_PAGESIZE - pglen);
+
+    rc = ControlTransfer(handle,
+                         BLUSB_RECIPIENT_INTERFACE |
+                             BLUSB_ENDPOINT_OUT |
+                             BLUSB_REQUEST_TYPE_CLASS,
+                         BLUSB_REQUEST_SET_REPORT,
+                         BLUSB_REQUEST_FEATURE_REPORT |
+                             HID_REPORT_ID_FEATURE_READ_WRITE_LAYOUT,
+                         0,
+                         layout.buffer, sizeof(layout.buffer),
+                         1000);
+    if (rc < BLUSB_SUCCESS)
+      break;
+    sent += rc - 3;
+    if (layout.pg_cnt == layout.num_pgs)
+      {
+      rc = sent;
+      break;
+      }
+    layout.pg_cnt++;
     }
-  layout.pg_cnt++;
   }
 
-if (sent <= 0)
+if (rc <= 0)
   {
   rc = ControlTransfer(handle,
                        BLUSB_RECIPIENT_ENDPOINT |
@@ -586,33 +615,37 @@ int BlUsbDev::ReadDebounce()
 if (!IsOpen())
   return BLUSB_ERROR_NO_DEVICE;
 
-// first, try V1.5++ method
+int rc = BLUSB_ERROR_INVALID_PARAM;
 hid_ctrl_report_t ctrl = {0};
-ctrl.id = HID_REPORT_ID_FEATURE_READ_WRITE_DEBOUNCE;
-int rc = ControlTransfer(handle,
-                         BLUSB_RECIPIENT_INTERFACE |
-                             BLUSB_ENDPOINT_IN |
-                             BLUSB_REQUEST_TYPE_CLASS,
-                         BLUSB_REQUEST_GET_REPORT,
-                         BLUSB_REQUEST_FEATURE_REPORT |
-                             HID_REPORT_ID_FEATURE_READ_WRITE_DEBOUNCE,
-                         0,
-                         ctrl.buffer, sizeof(ctrl.buffer),
-                         1000);
+if (GetFwVersion() >= 0x0105)
+  {
+  // first, try V1.5++ method
+  ctrl.id = HID_REPORT_ID_FEATURE_READ_WRITE_DEBOUNCE;
+  rc = ControlTransfer(handle,
+                       BLUSB_RECIPIENT_INTERFACE |
+                           BLUSB_ENDPOINT_IN |
+                           BLUSB_REQUEST_TYPE_CLASS,
+                       BLUSB_REQUEST_GET_REPORT,
+                       BLUSB_REQUEST_FEATURE_REPORT |
+                           HID_REPORT_ID_FEATURE_READ_WRITE_DEBOUNCE,
+                       0,
+                       ctrl.buffer, sizeof(ctrl.buffer),
+                       1000);
+  }
+
 // if that did not return a sufficiently large buffer, try old method
 if (rc < 1)
   {
-  wxUint8 buffer[8] = { 0 };
   rc = ControlTransfer(handle,
                        BLUSB_RECIPIENT_INTERFACE |
                            BLUSB_ENDPOINT_IN |
                            BLUSB_REQUEST_TYPE_VENDOR,
                        USB_READ_DEBOUNCE,
                        0, 0,
-                       buffer, sizeof(buffer),
+                       ctrl.buffer, sizeof(ctrl.buffer),
                        1000);
   if (rc >= BLUSB_SUCCESS)
-    return buffer[GetFwMajorVersion() ? 0 : 4];
+    return ctrl.buffer[GetFwMajorVersion() ? 0 : 4];
   }
 else
   return ctrl.buffer[0];
@@ -630,33 +663,36 @@ if (nDebounce < 1 || nDebounce > 255)
 if (!IsOpen())
   return BLUSB_ERROR_NO_DEVICE;
 
-// first, try V1.5++ method
+int rc = BLUSB_ERROR_INVALID_PARAM;
 hid_ctrl_report_t ctrl = {0};
-ctrl.id = HID_REPORT_ID_FEATURE_READ_WRITE_DEBOUNCE;
-ctrl.payload[0] = (wxUint8)nDebounce;
+if (GetFwVersion() >= 0x0105)
+  {
+  // first, try V1.5++ method
+  ctrl.id = HID_REPORT_ID_FEATURE_READ_WRITE_DEBOUNCE;
+  ctrl.payload[0] = (wxUint8)nDebounce;
 
-int rc = ControlTransfer(handle,
-                         BLUSB_RECIPIENT_INTERFACE |
-                             BLUSB_ENDPOINT_OUT |
-                             BLUSB_REQUEST_TYPE_CLASS,
-                         BLUSB_REQUEST_SET_REPORT,
-                         BLUSB_REQUEST_FEATURE_REPORT |
-                             HID_REPORT_ID_FEATURE_READ_WRITE_DEBOUNCE,
-                         0,
-                         ctrl.buffer, sizeof(ctrl.buffer),
-                         1000);
+  rc = ControlTransfer(handle,
+                       BLUSB_RECIPIENT_INTERFACE |
+                           BLUSB_ENDPOINT_OUT |
+                           BLUSB_REQUEST_TYPE_CLASS,
+                       BLUSB_REQUEST_SET_REPORT,
+                       BLUSB_REQUEST_FEATURE_REPORT |
+                           HID_REPORT_ID_FEATURE_READ_WRITE_DEBOUNCE,
+                       0,
+                       ctrl.buffer, sizeof(ctrl.buffer),
+                       1000);
+  }
 // if that did not return OK, try old method
 if (rc < BLUSB_SUCCESS)
   {
-  wxUint8 buffer[8] = { 0 };
-  buffer[GetFwMajorVersion() ? 0 : 4] = (wxUint8)nDebounce;
+  ctrl.buffer[GetFwMajorVersion() ? 0 : 4] = (wxUint8)nDebounce;
   return ControlTransfer(handle,
                          BLUSB_RECIPIENT_INTERFACE |
                              BLUSB_ENDPOINT_OUT |
                              BLUSB_REQUEST_TYPE_VENDOR,
                          USB_WRITE_DEBOUNCE,
                          0, 0,
-                         buffer, sizeof(buffer),
+                         ctrl.buffer, sizeof(ctrl.buffer),
                          1000);
   }
 return rc;
@@ -671,19 +707,26 @@ int BlUsbDev::ReadMacros(wxUint8 *buffer, int buflen)
 if (!IsOpen())
   return BLUSB_ERROR_NO_DEVICE;
 
-// first, try V1.5++ method
-hid_macro_data_report_t macros = {0};
-macros.id = HID_REPORT_ID_FEATURE_READ_WRITE_MACROS;
-int rc = ControlTransfer(handle,
-                         BLUSB_RECIPIENT_INTERFACE |
-                             BLUSB_ENDPOINT_IN |
-                             BLUSB_REQUEST_TYPE_CLASS,
-                         BLUSB_REQUEST_GET_REPORT,
-                         BLUSB_REQUEST_FEATURE_REPORT |
-                             HID_REPORT_ID_FEATURE_READ_WRITE_MACROS,
-                         0,
-                         macros.buffer, sizeof(macros.buffer),
-                         1000);
+int rc = BLUSB_ERROR_INVALID_PARAM;
+if (GetFwVersion() >= 0x0105)
+  {
+  // first, try V1.5++ method
+  hid_macro_data_report_t macros = {0};
+  macros.id = HID_REPORT_ID_FEATURE_READ_WRITE_MACROS;
+  rc = ControlTransfer(handle,
+                       BLUSB_RECIPIENT_INTERFACE |
+                           BLUSB_ENDPOINT_IN |
+                           BLUSB_REQUEST_TYPE_CLASS,
+                       BLUSB_REQUEST_GET_REPORT,
+                       BLUSB_REQUEST_FEATURE_REPORT |
+                           HID_REPORT_ID_FEATURE_READ_WRITE_MACROS,
+                       0,
+                       macros.buffer, sizeof(macros.buffer),
+                       1000);
+  if (rc >= 1)
+    for (int i = 0; i < rc && i < buflen; i++)
+      buffer[i] = macros.buffer[i];
+  }
 // if that did not return a sufficiently large buffer, try old method
 if (rc < 1)
   {
@@ -702,11 +745,6 @@ if (rc < 1)
       buffer[i] = ibuffer[i];
     }
   }
-else
-  {
-  for (int i = 0; i < rc && i < buflen; i++)
-    buffer[i] = macros.buffer[i];
-  }
 return rc > buflen ? buflen : rc;
 }
 
@@ -719,20 +757,24 @@ int BlUsbDev::WriteMacros(wxUint8 *buffer, int buflen)
 if (!IsOpen())
   return BLUSB_ERROR_NO_DEVICE;
 
-// first, try V1.5++ method
-hid_macro_data_report_t macros = {0};
-macros.id = HID_REPORT_ID_FEATURE_READ_WRITE_MACROS;
-memcpy(macros.macro_data, buffer, min(buflen, NUM_MACROKEYS*LEN_MACRO));
-int rc = ControlTransfer(handle,
-                         BLUSB_ENDPOINT_OUT |
-                             BLUSB_REQUEST_TYPE_CLASS |
-                             BLUSB_RECIPIENT_INTERFACE,
-                         BLUSB_REQUEST_SET_REPORT,
-                         BLUSB_REQUEST_FEATURE_REPORT |
-                             HID_REPORT_ID_FEATURE_READ_WRITE_MACROS,
-                         0,
-                         macros.buffer, sizeof(macros.buffer),
-                         1000);
+int rc = BLUSB_ERROR_INVALID_PARAM;
+if (GetFwVersion() >= 0x0105)
+  {
+  // first, try V1.5++ method
+  hid_macro_data_report_t macros = {0};
+  macros.id = HID_REPORT_ID_FEATURE_READ_WRITE_MACROS;
+  memcpy(macros.macro_data, buffer, min(buflen, NUM_MACROKEYS*LEN_MACRO));
+  rc = ControlTransfer(handle,
+                       BLUSB_ENDPOINT_OUT |
+                           BLUSB_REQUEST_TYPE_CLASS |
+                           BLUSB_RECIPIENT_INTERFACE,
+                       BLUSB_REQUEST_SET_REPORT,
+                       BLUSB_REQUEST_FEATURE_REPORT |
+                           HID_REPORT_ID_FEATURE_READ_WRITE_MACROS,
+                       0,
+                       macros.buffer, sizeof(macros.buffer),
+                       1000);
+  }
 // if that did not return OK, try old method
 if (rc < BLUSB_SUCCESS)
   return ControlTransfer(handle,
@@ -752,19 +794,23 @@ return rc;
 
 int BlUsbDev::EnterBootloader()
 {
-// only works in V1.5++
-hid_ctrl_report_t ctrl = { 0 };
-ctrl.id = HID_REPORT_ID_FEATURE_ENTER_BOOTLOADER;
-return ControlTransfer(handle,
-                       BLUSB_ENDPOINT_OUT |
-                           BLUSB_REQUEST_TYPE_CLASS |
-                           BLUSB_RECIPIENT_INTERFACE,
-                       BLUSB_REQUEST_SET_REPORT,
-                       BLUSB_REQUEST_FEATURE_REPORT |
-                           HID_REPORT_ID_FEATURE_ENTER_BOOTLOADER,
-                       0,
-                       ctrl.buffer, sizeof(ctrl.buffer),
-                       1000);
+if (GetFwVersion() >= 0x0105)
+  {
+  // only works in V1.5++
+  hid_ctrl_report_t ctrl = { 0 };
+  ctrl.id = HID_REPORT_ID_FEATURE_ENTER_BOOTLOADER;
+  return ControlTransfer(handle,
+                         BLUSB_ENDPOINT_OUT |
+                             BLUSB_REQUEST_TYPE_CLASS |
+                             BLUSB_RECIPIENT_INTERFACE,
+                         BLUSB_REQUEST_SET_REPORT,
+                         BLUSB_REQUEST_FEATURE_REPORT |
+                             HID_REPORT_ID_FEATURE_ENTER_BOOTLOADER,
+                         0,
+                         ctrl.buffer, sizeof(ctrl.buffer),
+                         1000);
+  }
+return BLUSB_ERROR_INVALID_PARAM;
 }
 
 /*****************************************************************************/

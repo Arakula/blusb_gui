@@ -154,13 +154,13 @@ SetVendorDisplayName(wxT("Hermann Seib"));
 pConfig = wxConfigBase::Get();
 wxImage::AddHandler(new wxPNGHandler);
 
-SetupText2HIDMapping();
                                         /* setup default layouts             */
 defaultLayout[0].Resize(1, 8, 16, 0, defIBMmatrix);
 defaultLayout[1].Resize(1, 8, 20, 0, def122matrix);
 layout = defaultLayout[0];              /* and init current to normal M      */
 
 int rc = dev.Open();                    /* try to open the device            */
+SetupText2HIDMapping(dev.IsOpen() ? dev.GetFwVersion() : MAX_FW_VER);
 if (rc == BLUSB_SUCCESS)                /* if done,                          */
   rc = ReadLayout();                    /* fetch current layout from Model M */
 if (rc != BLUSB_SUCCESS)
@@ -348,8 +348,18 @@ if (lbuf[0] > 0 &&                      /* did we receive meaningful data?   */
       }
     }
   }
+else if (lbuf[0] == 0)                  /* no layout yet?                    */
+  {
+  if (fwVer >= 0x0103)  // this is DEFINITELY 20.
+    {
+    rows = nDevMatrixRows = NUMROWS;
+    cols = nDevMatrixCols = NUMCOLS;
+    }
+  else                                  /* otherwise ... can't determine.    */
+    return BLUSB_ERROR_OTHER;           /* so make sure this ends NOW.       */
+  }
 
-return BLUSB_ERROR_NO_DEVICE;
+return BLUSB_ERROR_NO_LAYOUT;
 }
 
 /*****************************************************************************/
@@ -433,7 +443,8 @@ int fwVer = dev.GetFwVersion();
 
 int numrows = -1, numcols = -1;         /* get rows / columns in buffer      */
 int rc = ReadMatrixLayout(numrows, numcols);
-if (rc < BLUSB_SUCCESS)                 /* matrix not determined?            */
+if (rc < BLUSB_SUCCESS &&               /* matrix not determined?            */
+    rc != BLUSB_ERROR_NO_LAYOUT)
   {
   if (dev.IsOpen())                     /* ... mhm. Empty controller?        */
     {
