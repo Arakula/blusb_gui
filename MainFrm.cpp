@@ -155,13 +155,22 @@ wxPoint pos = pStatic->GetPosition();
 pos.x += 3;
 pStatic->Move(pos);
 pos.x += pStatic->GetSize().GetX();
-pLayers = new wxChoice(this, Blusb_LayerCount, pos);
-for (int i = 1; i <= 6; i++)
-  pLayers->Append(wxString::Format(wxT("%d"), i));
+wxArrayString a_1_maxLayer;
+int nLayersMax = (!GetApp()->IsDevOpen() ||
+                  GetApp()->GetFwVersion() >= 0x0105) ?
+                     NUMLAYERS_MAX :
+                     NUMLAYERS_MAX_OLD;
+for (int i = 1; i <= nLayersMax; i++)
+  a_1_maxLayer.Add(wxString::Format(wxT("%d"), i));
+wxSize sz(wxDefaultSize);
+pLayers = new wxChoice(this, Blusb_LayerCount, pos, sz, a_1_maxLayer);
+sz = pLayers->GetSize();
 pLayers->Select(0);
 pos = pStatic->GetPosition();
 pos.y += (pLayers->GetSize().GetY() - pStatic->GetSize().GetY()) / 2;
 pStatic->Move(pos);
+sz = pLayers->GetSize();  // combobox scaled for 1 digit;
+sz.Scale(1.3, 1.0);       // scale up to ~3 digits
 
 pKbd = NULL;                            /* keyboard panel not set up yet     */
 
@@ -178,16 +187,50 @@ if (GetApp()->IsDevOpen())
                                                pos);
   pos.x += pStDebounce->GetSize().GetX();
   pos.y = pLayers->GetPosition().y;
-  pDebounce = new wxChoice(this, Blusb_Debounce, pos);
+  wxArrayString a_1_20;
   for (int i = 1; i <= 20; i++)
-    pDebounce->Append(wxString::Format(wxT("%d"), i));
+      a_1_20.Add(wxString::Format(wxT("%d"), i));
+  pDebounce = new wxChoice(this, Blusb_Debounce, pos, sz, a_1_20);
   int nDebounce = GetApp()->ReadDebounce();
   if (nDebounce < 1 || nDebounce > 20)
     nDebounce = 7;
   pDebounce->Select(nDebounce - 1);
+
+  wxUint8 pwmUsb, pwmBt;
+#ifdef _DEBUG
+  GetApp()->ReadPWM(pwmUsb, pwmBt);
+  if (1)
+#else
+  if (GetApp()->ReadPWM(pwmUsb, pwmBt) > BLUSB_SUCCESS)
+#endif
+    {
+    wxArrayString a_0_255;
+    for (int i = 0; i <= 255; i++)
+      a_0_255.Add(wxString::Format(wxT("%d"), i));
+    pos.x += pDebounce->GetSize().GetX() + 10;
+    pos.y = pStatic->GetPosition().y;
+    wxStaticText *pStPwmUsb = new wxStaticText(this, wxID_ANY,
+                                               wxT("PWM USB: "),
+                                               pos);
+    pos.x += pStPwmUsb->GetSize().GetX();
+    pos.y = pLayers->GetPosition().y;
+    pPwmUsb = new wxChoice(this, Blusb_PwmUsb, pos, sz, a_0_255);
+    pos.x += pPwmUsb->GetSize().GetX() + 5;
+    pos.y = pStatic->GetPosition().y;
+    wxStaticText *pStPwmBt = new wxStaticText(this, wxID_ANY,
+                                              wxT("BT: "),
+                                              pos);
+    pos.x += pStPwmBt->GetSize().GetX();
+    pos.y = pLayers->GetPosition().y;
+    pPwmBt = new wxChoice(this, Blusb_PwmBt, pos, sz, a_0_255);
+    pPwmUsb->Select(pwmUsb);
+    pPwmBt->Select(pwmBt);
+    }
+  else
+    pPwmUsb = pPwmBt = NULL;
   }
 else
-  pDebounce = NULL;
+  pDebounce = pPwmUsb = pPwmBt = NULL;
 
 
 wxSizer *sizerV = new wxBoxSizer(wxVERTICAL);
@@ -346,6 +389,8 @@ wxBEGIN_EVENT_TABLE(CMainFrame, wxFrame)
     EVT_TIMER(Blusb_Timer1, CMainFrame::OnReadMatrixTimer)
     EVT_CHOICE(Blusb_LayerCount, CMainFrame::OnLayerCount)
     EVT_CHOICE(Blusb_Debounce, CMainFrame::OnDebounce)
+    EVT_CHOICE(Blusb_PwmUsb, CMainFrame::OnPwmUsb)
+    EVT_CHOICE(Blusb_PwmBt, CMainFrame::OnPwmBt)
 
     EVT_MENU(Blusb_ResetLayout, CMainFrame::OnReset)
     EVT_MENU(Blusb_ReadLayout, CMainFrame::OnReadLayout)
@@ -569,6 +614,58 @@ if (GetApp()->WriteDebounce(m_panel->GetDebounce()) < BLUSB_SUCCESS)
   {
   CNoServiceMode nosm;                  /* no service mode in here!          */
   wxMessageBox(wxT("Error writing new debounce value to keyboard"),
+               wxT("Model M Error"),
+               wxCANCEL | wxCENTRE);
+  return;
+  }
+}
+
+/*****************************************************************************/
+/* OnPwmUsb : USB PWM changes                                                */
+/*****************************************************************************/
+
+void CMainFrame::OnPwmUsb(wxCommandEvent& event)
+{
+wxUint8 pwmUsb, pwmBt;
+if (GetApp()->ReadPWM(pwmUsb, pwmBt) < BLUSB_SUCCESS)
+  {
+  CNoServiceMode nosm;                  /* no service mode in here!          */
+  wxMessageBox(wxT("Error reading PWM values from keyboard"),
+               wxT("Model M Error"),
+               wxCANCEL | wxCENTRE);
+  return;
+  }
+pwmUsb = (wxUint8)m_panel->GetPwmUsb();
+if (GetApp()->WritePWM(pwmUsb, pwmBt) < BLUSB_SUCCESS)
+  {
+  CNoServiceMode nosm;                  /* no service mode in here!          */
+  wxMessageBox(wxT("Error writing new USB PWM value to keyboard"),
+               wxT("Model M Error"),
+               wxCANCEL | wxCENTRE);
+  return;
+  }
+}
+
+/*****************************************************************************/
+/* OnPwmBt : BT PWM changes                                                  */
+/*****************************************************************************/
+
+void CMainFrame::OnPwmBt(wxCommandEvent& event)
+{
+wxUint8 pwmUsb, pwmBt;
+if (GetApp()->ReadPWM(pwmUsb, pwmBt) < BLUSB_SUCCESS)
+  {
+  CNoServiceMode nosm;                  /* no service mode in here!          */
+  wxMessageBox(wxT("Error reading PWM values from keyboard"),
+               wxT("Model M Error"),
+               wxCANCEL | wxCENTRE);
+  return;
+  }
+pwmBt = (wxUint8)m_panel->GetPwmBt();
+if (GetApp()->WritePWM(pwmUsb, pwmBt) < BLUSB_SUCCESS)
+  {
+  CNoServiceMode nosm;                  /* no service mode in here!          */
+  wxMessageBox(wxT("Error writing new BT PWM value to keyboard"),
                wxT("Model M Error"),
                wxCANCEL | wxCENTRE);
   return;

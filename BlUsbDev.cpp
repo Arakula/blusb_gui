@@ -324,6 +324,7 @@ return rc > buflen ? buflen : rc;
 
 int BlUsbDev::ReadPWM(wxUint8 &pwmUSB, wxUint8 &pwmBT)
 {
+pwmUSB = pwmBT = 0;
 if (!IsOpen())
   return BLUSB_ERROR_NO_DEVICE;
 
@@ -352,7 +353,6 @@ if (rc < 2)
                        ctrl.buffer, sizeof(ctrl.buffer),
                        1000);
   }
-pwmUSB = pwmBT = 0;
 if (rc >= 1)
   pwmUSB = ctrl.buffer[0];
 if (rc >= 2)

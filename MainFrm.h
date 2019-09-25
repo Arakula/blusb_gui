@@ -45,6 +45,8 @@ enum
 
   Blusb_LayerCount,
   Blusb_Debounce,
+  Blusb_PwmUsb,
+  Blusb_PwmBt,
 
   Blusb_ResetLayout,
   Blusb_ReadLayout,
@@ -157,7 +159,9 @@ public:
     int GetLayers() { return (int)matrices.size(); }
     bool SetLayers(int nLayers, bool resetExisting = false);
 
-    int GetDebounce() { return pDebounce->GetSelection() + 1; }
+    int GetDebounce() { return pDebounce ? (pDebounce->GetSelection() + 1) : 0; }
+    int GetPwmUsb()   { return pPwmUsb ? pPwmUsb->GetSelection() : 0; }
+    int GetPwmBt()    { return pPwmBt ? pPwmBt->GetSelection() : 0; }
 
     void SetKbdLayout(KbdLayout &layout);
     void SetKbdGuiLayout(KbdGui &layout)
@@ -182,6 +186,7 @@ protected:
 
     wxChoice *pLayers;
     wxChoice *pDebounce;
+    wxChoice *pPwmUsb, *pPwmBt;
     wxNotebook *pMatrixNotebook;
     wxVector<CMatrixPanel *> matrices;
     CKbdPanel *pKbd;
@@ -212,6 +217,8 @@ private:
 
     void OnLayerCount(wxCommandEvent& event);
     void OnDebounce(wxCommandEvent& event);
+    void OnPwmUsb(wxCommandEvent& event);
+    void OnPwmBt(wxCommandEvent& event);
     void OnReset(wxCommandEvent& event);
     void OnReadLayout(wxCommandEvent& event);
     void OnUpdateReadLayout(wxUpdateUIEvent& event);
