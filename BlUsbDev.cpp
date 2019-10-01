@@ -483,6 +483,7 @@ if (GetFwVersion() >= 0x0105)
   layout.id = HID_REPORT_ID_FEATURE_READ_WRITE_LAYOUT;
 
   int totlen = 0;
+  rc = BLUSB_SUCCESS;
   while (rc >= BLUSB_SUCCESS)
     {
     rc = ControlTransfer(handle,
